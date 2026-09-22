@@ -1,0 +1,9 @@
+security_category,error_count
+authentication,21
+secrets,21
+cryptography,15
+authorization,14
+general_security,8
+input_validation,4
+vulnerability,2
+code_execution,1
