@@ -139,18 +139,6 @@ The following metrics were used:
 - Recall
 - F1-score
 
-## Model Results
-
-The final test-set results are:
-
-| Model | Accuracy | | Balanced Accuracy | Precision | | Recall | F1-score |
-| ------------- | ------------- | | ------------- | ------------- | | ------------- | ------------- |
-| Linear SVM  | 97.60%  | | 96.49%  | 99.47%  | | 93.23%  | 96.25%  |
-| Logistic Regression  | 97.05%  | | 95.63%  | 99.64%  | | 91.42%  | 95.35%  |
-| Random Forest | 96.83%  | | 95.26%  | 99.82%  | | 90.59%  | 94.98%  |
-
-The models are evaluated using the same test set and evaluation metrics
-
 ## Additional Experiments and Analysis
 
 ### Cross Validation
