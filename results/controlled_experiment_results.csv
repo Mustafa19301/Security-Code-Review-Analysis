@@ -1,0 +1,9 @@
+experiment,model,ngram_configuration,class_weight,number_of_features,accuracy,balanced_accuracy,precision,recall,f1_score,true_negative,false_positive,false_negative,true_positive
+Linear SVM | unigrams_bigrams | balanced,Linear SVM,unigrams_bigrams,balanced,14862,0.9759562841530055,0.9649461269656378,0.9947183098591549,0.9323432343234324,0.9625212947189097,1221,3,41,565
+Linear SVM | unigrams_bigrams | unweighted,Linear SVM,unigrams_bigrams,unweighted,14862,0.9754098360655737,0.9632878729049376,0.9982238010657194,0.9273927392739274,0.9615055603079555,1223,1,44,562
+Logistic Regression | unigrams_bigrams | balanced,Logistic Regression,unigrams_bigrams,balanced,14862,0.9704918032786886,0.9562787161069048,0.9964028776978417,0.9141914191419142,0.9535283993115319,1222,2,52,554
+Linear SVM | unigrams | unweighted,Linear SVM,unigrams,unweighted,5527,0.9672131147540983,0.9542443214909726,0.9840425531914894,0.9158415841584159,0.9487179487179487,1215,9,51,555
+Linear SVM | unigrams | balanced,Linear SVM,unigrams,balanced,5527,0.9666666666666667,0.957168510968744,0.9690189328743546,0.929042904290429,0.9486099410278012,1206,18,43,563
+Logistic Regression | unigrams | balanced,Logistic Regression,unigrams,balanced,5527,0.9655737704918033,0.9517690739662201,0.983957219251337,0.9108910891089109,0.9460154241645244,1215,9,54,552
+Logistic Regression | unigrams_bigrams | unweighted,Logistic Regression,unigrams_bigrams,unweighted,14862,0.9601092896174863,0.9397689768976898,1.0,0.8795379537953796,0.935908691834943,1224,0,73,533
+Logistic Regression | unigrams | unweighted,Logistic Regression,unigrams,unweighted,5527,0.9590163934426229,0.9381188118811881,1.0,0.8762376237623762,0.9340369393139841,1224,0,75,531
