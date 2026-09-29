@@ -19,3 +19,6 @@ data/raw/
 
 # Large processed datasets
 data/processed/unique_comments.csv
+
+# Raw patch-aware dataset
+data/pr_review_traces/*.jsonl
