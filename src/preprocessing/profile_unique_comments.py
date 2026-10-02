@@ -25,11 +25,6 @@ comment_length_total = 0
 comment_length_min = None
 comment_length_max = None
 
-
-# ============================================================
-# PROCESS DATASET
-# ============================================================
-
 print("\nReading processed dataset...")
 print("-" * 70)
 
@@ -40,19 +35,11 @@ for chunk_number, chunk in enumerate(
 
     total_rows += len(chunk)
 
-    # --------------------------------------------------------
-    # Unique comment IDs
-    # --------------------------------------------------------
-
     unique_comment_ids.update(
         chunk["comment_id"]
         .dropna()
         .astype(str)
     )
-
-    # --------------------------------------------------------
-    # Missing values
-    # --------------------------------------------------------
 
     missing_comments += chunk["comment"].isna().sum()
     missing_repos += chunk["repo"].isna().sum()
@@ -60,18 +47,10 @@ for chunk_number, chunk in enumerate(
     missing_pr_ids += chunk["pr_id"].isna().sum()
     missing_commit_ids += chunk["c_id"].isna().sum()
 
-    # --------------------------------------------------------
-    # Repository distribution
-    # --------------------------------------------------------
-
     repo_chunk = chunk["repo"].dropna()
 
     for repo in repo_chunk:
         repo_counts[repo] = repo_counts.get(repo, 0) + 1
-
-    # --------------------------------------------------------
-    # Language distribution
-    # --------------------------------------------------------
 
     language_chunk = chunk["language"].dropna()
 
@@ -79,10 +58,6 @@ for chunk_number, chunk in enumerate(
         language_counts[language] = (
             language_counts.get(language, 0) + 1
         )
-
-    # --------------------------------------------------------
-    # Comment length
-    # --------------------------------------------------------
 
     lengths = (
         chunk["comment"]
@@ -117,11 +92,6 @@ for chunk_number, chunk in enumerate(
             f"Processed {total_rows:,} rows..."
         )
 
-
-# ============================================================
-# RESULTS
-# ============================================================
-
 print("\n")
 print("=" * 70)
 print("PROCESSED DATASET QUALITY RESULTS")
@@ -142,10 +112,6 @@ print(
     f"{total_rows - len(unique_comment_ids):,}"
 )
 
-
-# ============================================================
-# MISSING VALUES
-# ============================================================
 
 print("\n")
 print("=" * 70)
@@ -173,11 +139,6 @@ for column, count in missing_values.items():
         f"{count:>10,}"
         f" ({percentage:6.2f}%)"
     )
-
-
-# ============================================================
-# REPOSITORIES
-# ============================================================
 
 print("\n")
 print("=" * 70)
@@ -207,11 +168,6 @@ for repo, count in sorted_repos[:20]:
         f" ({percentage:6.2f}%)"
     )
 
-
-# ============================================================
-# LANGUAGES
-# ============================================================
-
 print("\n")
 print("=" * 70)
 print("LANGUAGE DISTRIBUTION")
@@ -240,11 +196,6 @@ for language, count in sorted_languages:
         f" ({percentage:6.2f}%)"
     )
 
-
-# ============================================================
-# COMMENT LENGTH
-# ============================================================
-
 print("\n")
 print("=" * 70)
 print("COMMENT LENGTH")
@@ -270,11 +221,6 @@ print(
     f"Maximum comment length: "
     f"{comment_length_max}"
 )
-
-
-# ============================================================
-# FINAL CHECK
-# ============================================================
 
 print("\n")
 print("=" * 70)

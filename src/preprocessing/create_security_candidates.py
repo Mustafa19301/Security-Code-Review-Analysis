@@ -2,20 +2,12 @@ import pandas as pd
 import re
 import os
 
-# ============================================================
-# FILE PATHS
-# ============================================================
-
 INPUT_FILE = "data/processed/unique_comments.csv"
 OUTPUT_FILE = "data/processed/security_candidates.csv"
 
 # Number of rows processed at a time
 CHUNK_SIZE = 100_000
 
-
-# ============================================================
-# SECURITY INDICATORS
-# ============================================================
 
 # Strong indicators:
 # These are terms/phrases that are much more likely to indicate
@@ -86,11 +78,6 @@ WEAK_INDICATORS = {
     "security": r"\bsecurity\b",
 }
 
-
-# ============================================================
-# COMPILE REGULAR EXPRESSIONS
-# ============================================================
-
 STRONG_PATTERNS = {
     name: re.compile(pattern, re.IGNORECASE)
     for name, pattern in STRONG_INDICATORS.items()
@@ -100,11 +87,6 @@ WEAK_PATTERNS = {
     name: re.compile(pattern, re.IGNORECASE)
     for name, pattern in WEAK_INDICATORS.items()
 }
-
-
-# ============================================================
-# DETECTION FUNCTION
-# ============================================================
 
 def detect_security_indicators(text):
     """
@@ -129,17 +111,9 @@ def detect_security_indicators(text):
     matched_strong = []
     matched_weak = []
 
-    # --------------------------------------------------------
-    # Strong indicators
-    # --------------------------------------------------------
-
     for name, pattern in STRONG_PATTERNS.items():
         if pattern.search(text):
             matched_strong.append(name)
-
-    # --------------------------------------------------------
-    # Weak indicators
-    # --------------------------------------------------------
 
     for name, pattern in WEAK_PATTERNS.items():
         if pattern.search(text):
@@ -166,10 +140,6 @@ def detect_security_indicators(text):
     # --------------------------------------------------------
 
     score = (len(matched_strong) * 2) + len(matched_weak)
-
-    # --------------------------------------------------------
-    # Security categories
-    # --------------------------------------------------------
 
     categories = set()
 
@@ -303,11 +273,6 @@ def detect_security_indicators(text):
         score
     )
 
-
-# ============================================================
-# MAIN PROCESSING
-# ============================================================
-
 def main():
 
     print("=" * 70)
@@ -323,36 +288,20 @@ def main():
     print("\nChunk size:")
     print(CHUNK_SIZE)
 
-    # --------------------------------------------------------
-    # Check input exists
-    # --------------------------------------------------------
-
     if not os.path.exists(INPUT_FILE):
         print("\nERROR: Input file does not exist.")
         print("Expected:")
         print(INPUT_FILE)
         return
 
-    # --------------------------------------------------------
-    # Create output directory
-    # --------------------------------------------------------
-
     os.makedirs(
         os.path.dirname(OUTPUT_FILE),
         exist_ok=True
     )
 
-    # --------------------------------------------------------
-    # Remove previous output
-    # --------------------------------------------------------
-
     if os.path.exists(OUTPUT_FILE):
         os.remove(OUTPUT_FILE)
         print("\nRemoved previous output file.")
-
-    # --------------------------------------------------------
-    # Counters
-    # --------------------------------------------------------
 
     total_rows = 0
     candidate_rows = 0
@@ -363,10 +312,6 @@ def main():
     category_counts = {}
 
     first_write = True
-
-    # --------------------------------------------------------
-    # Read dataset in chunks
-    # --------------------------------------------------------
 
     for chunk_number, chunk in enumerate(
         pd.read_csv(
@@ -382,18 +327,10 @@ def main():
 
         total_rows += len(chunk)
 
-        # ----------------------------------------------------
-        # Detect security indicators
-        # ----------------------------------------------------
-
         detection_results = (
             chunk["comment"]
             .apply(detect_security_indicators)
         )
-
-        # ----------------------------------------------------
-        # Extract detection results
-        # ----------------------------------------------------
 
         chunk["matched_strong"] = detection_results.apply(
             lambda x: "; ".join(x[0])
@@ -421,19 +358,11 @@ def main():
             )
         )
 
-        # ----------------------------------------------------
-        # Candidate filter
-        # ----------------------------------------------------
-
         candidate_mask = detection_results.apply(
             lambda x: x[3]
         )
 
         candidates = chunk[candidate_mask].copy()
-
-        # ----------------------------------------------------
-        # Update counters
-        # ----------------------------------------------------
 
         candidate_count = len(candidates)
 
@@ -452,10 +381,6 @@ def main():
         strong_candidate_rows += strong_count
         weak_candidate_rows += weak_count
 
-        # ----------------------------------------------------
-        # Count categories
-        # ----------------------------------------------------
-
         for categories in candidates["security_categories"]:
 
             if not categories:
@@ -466,10 +391,6 @@ def main():
                 category_counts[category] = (
                     category_counts.get(category, 0) + 1
                 )
-
-        # ----------------------------------------------------
-        # Keep only useful columns
-        # ----------------------------------------------------
 
         candidates = candidates[
             [
@@ -487,10 +408,6 @@ def main():
             ]
         ]
 
-        # ----------------------------------------------------
-        # Write candidates
-        # ----------------------------------------------------
-
         if len(candidates) > 0:
 
             candidates.to_csv(
@@ -502,10 +419,6 @@ def main():
 
             first_write = False
 
-        # ----------------------------------------------------
-        # Progress
-        # ----------------------------------------------------
-
         print(
             f"Rows processed: {total_rows:,}"
         )
@@ -513,10 +426,6 @@ def main():
         print(
             f"Candidates found: {candidate_rows:,}"
         )
-
-    # ========================================================
-    # FINAL SUMMARY
-    # ========================================================
 
     print("\n" + "=" * 70)
     print("SECURITY CANDIDATE ANALYSIS COMPLETE")
@@ -548,10 +457,6 @@ def main():
         f"Weak-only candidates:     {weak_candidate_rows:,}"
     )
 
-    # --------------------------------------------------------
-    # Category summary
-    # --------------------------------------------------------
-
     print("\nSecurity categories:")
 
     sorted_categories = sorted(
@@ -573,10 +478,6 @@ def main():
             f"{count:>10,} "
             f"({percentage:>6.2f}%)"
         )
-
-    # --------------------------------------------------------
-    # Output information
-    # --------------------------------------------------------
 
     print("\nOutput file:")
     print(OUTPUT_FILE)
@@ -607,11 +508,6 @@ def main():
     print(
         "security_label = 1."
     )
-
-
-# ============================================================
-# RUN PROGRAM
-# ============================================================
 
 if __name__ == "__main__":
     main()

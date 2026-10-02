@@ -80,9 +80,9 @@ print(f"Unique comment IDs:      {len(unique_comment_ids):,}")
 print(f"Unique PR IDs:           {len(unique_pr_ids):,}")
 print(f"Unique commit IDs:       {len(unique_commit_ids):,}")
 
-print("\n------------------------------------------------------------")
+print("\n")
 print("LANGUAGE DISTRIBUTION")
-print("------------------------------------------------------------")
+print("")
 
 language_series = pd.Series(language_counts).sort_values(
     ascending=False
@@ -97,9 +97,8 @@ for language, count in language_series.items():
         f"({percentage:6.2f}%)"
     )
 
-print("\n------------------------------------------------------------")
+print("\n")
 print("MISSING VALUES")
-print("------------------------------------------------------------")
 
 for column, count in missing_values.items():
     percentage = count / total_rows * 100
@@ -110,9 +109,8 @@ for column, count in missing_values.items():
         f"({percentage:6.2f}%)"
     )
 
-print("\n------------------------------------------------------------")
+print("\n")
 print("COMMENT LENGTHS")
-print("------------------------------------------------------------")
 
 length_series = pd.Series(comment_lengths)
 

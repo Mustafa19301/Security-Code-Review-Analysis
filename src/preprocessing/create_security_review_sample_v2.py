@@ -40,10 +40,6 @@ def main():
 
     review_parts = []
 
-    # --------------------------------------------------
-    # 1. Sample high-confidence candidates
-    # --------------------------------------------------
-
     high_confidence = df[
         df["candidate_type"] == "high_confidence"
     ].sample(
@@ -58,9 +54,6 @@ def main():
 
     review_parts.append(high_confidence)
 
-    # --------------------------------------------------
-    # 2. Sample contextual candidates
-    # --------------------------------------------------
 
     contextual = df[
         df["candidate_type"] == "contextual"
@@ -76,10 +69,6 @@ def main():
 
     review_parts.append(contextual)
 
-    # --------------------------------------------------
-    # 3. Sample weak candidates
-    # --------------------------------------------------
-
     weak = df[
         df["candidate_type"] == "weak"
     ].sample(
@@ -94,10 +83,6 @@ def main():
 
     review_parts.append(weak)
 
-    # --------------------------------------------------
-    # 4. Combine and shuffle
-    # --------------------------------------------------
-
     review_sample = pd.concat(
         review_parts,
         ignore_index=True,
@@ -107,10 +92,6 @@ def main():
         frac=1,
         random_state=RANDOM_STATE,
     ).reset_index(drop=True)
-
-    # --------------------------------------------------
-    # 5. Add manual-review fields
-    # --------------------------------------------------
 
     review_sample["manual_label"] = ""
     review_sample["review_notes"] = ""

@@ -2,18 +2,8 @@ import os
 import pandas as pd
 from collections import Counter
 
-
-# ------------------------------------------------------------
-# FILE PATHS
-# ------------------------------------------------------------
-
 INPUT_FILE = "data/processed/security_review_sample_clean.csv"
 OUTPUT_FILE = "data/processed/false_positive_analysis.csv"
-
-
-# ------------------------------------------------------------
-# LOAD REVIEWED DATA
-# ------------------------------------------------------------
 
 print("=" * 70)
 print("ANALYZING SECURITY-CANDIDATE FALSE POSITIVES")
@@ -26,10 +16,6 @@ df = pd.read_csv(INPUT_FILE)
 print(f"Loaded {len(df):,} reviewed comments.")
 
 
-# ------------------------------------------------------------
-# CLEAN LABELS
-# ------------------------------------------------------------
-
 df["manual_label"] = pd.to_numeric(
     df["manual_label"],
     errors="coerce"
@@ -38,10 +24,6 @@ df["manual_label"] = pd.to_numeric(
 df = df.dropna(subset=["manual_label"]).copy()
 df["manual_label"] = df["manual_label"].astype(int)
 
-
-# ------------------------------------------------------------
-# SELECT FALSE POSITIVES
-# ------------------------------------------------------------
 
 # False positives are comments selected as candidates
 # but manually labeled as not security-related.
@@ -62,10 +44,6 @@ print(
 )
 
 
-# ------------------------------------------------------------
-# FALSE POSITIVES BY REVIEW GROUP
-# ------------------------------------------------------------
-
 print("\n" + "-" * 70)
 print("FALSE POSITIVES BY REVIEW GROUP")
 print("-" * 70)
@@ -75,10 +53,6 @@ group_counts = false_positives["review_group"].value_counts()
 for group, count in group_counts.items():
     print(f"{group}: {count:,}")
 
-
-# ------------------------------------------------------------
-# FALSE POSITIVES BY STRONG MATCH
-# ------------------------------------------------------------
 
 print("\n" + "-" * 70)
 print("FALSE POSITIVES BY MATCHED STRONG KEYWORD")
@@ -120,9 +94,6 @@ else:
     print("No strong-keyword matches found.")
 
 
-# ------------------------------------------------------------
-# FALSE POSITIVES BY WEAK MATCH
-# ------------------------------------------------------------
 
 print("\n" + "-" * 70)
 print("FALSE POSITIVES BY MATCHED WEAK KEYWORD")
@@ -141,11 +112,6 @@ if weak_counter:
         print(f"{keyword:<30} {count:>5}")
 else:
     print("No weak-keyword matches found.")
-
-
-# ------------------------------------------------------------
-# FALSE POSITIVES BY SECURITY CATEGORY
-# ------------------------------------------------------------
 
 print("\n" + "-" * 70)
 print("FALSE POSITIVES BY SECURITY CATEGORY")
@@ -166,10 +132,6 @@ else:
     print("No security categories found.")
 
 
-# ------------------------------------------------------------
-# FALSE POSITIVES BY CANDIDATE SCORE
-# ------------------------------------------------------------
-
 print("\n" + "-" * 70)
 print("FALSE POSITIVES BY CANDIDATE SCORE")
 print("-" * 70)
@@ -183,10 +145,6 @@ score_counts = (
 for score, count in score_counts.items():
     print(f"Score {score}: {count:,}")
 
-
-# ------------------------------------------------------------
-# FALSE POSITIVE RATE BY SCORE
-# ------------------------------------------------------------
 
 print("\n" + "-" * 70)
 print("FALSE-POSITIVE RATE BY CANDIDATE SCORE")
@@ -213,11 +171,6 @@ score_summary["false_positive_rate_percent"] = (
 )
 
 print(score_summary.to_string(index=False))
-
-
-# ------------------------------------------------------------
-# SAVE FALSE POSITIVE DATA
-# ------------------------------------------------------------
 
 os.makedirs(
     os.path.dirname(OUTPUT_FILE),

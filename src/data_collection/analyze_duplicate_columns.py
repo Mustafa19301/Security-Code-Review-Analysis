@@ -3,11 +3,6 @@ import pandas as pd
 FILE_PATH = "data/raw/ghtorrent-2019-05-20.csv"
 CHUNK_SIZE = 50_000
 
-# ------------------------------------------------------------
-# PASS 1
-# Find which comment IDs are duplicated
-# ------------------------------------------------------------
-
 print("=" * 70)
 print("ANALYZING DUPLICATED COMMENT IDs")
 print("=" * 70)
@@ -40,10 +35,6 @@ for chunk_number, chunk in enumerate(
 
 print("\nPass 1 complete.")
 
-# ------------------------------------------------------------
-# Find duplicated comment IDs
-# ------------------------------------------------------------
-
 duplicated_ids = {
     comment_id
     for comment_id, count in comment_counts.items()
@@ -53,11 +44,6 @@ duplicated_ids = {
 print(f"\nTotal rows:              {total_rows:,}")
 print(f"Unique comment IDs:      {len(comment_counts):,}")
 print(f"Duplicated comment IDs:  {len(duplicated_ids):,}")
-
-# ------------------------------------------------------------
-# PASS 2
-# Analyze which columns vary
-# ------------------------------------------------------------
 
 print("\nPass 2: Analyzing duplicated comment IDs...")
 print("-" * 70)
@@ -154,10 +140,6 @@ for chunk_number, chunk in enumerate(
 
 print("\nPass 2 complete.")
 
-# ------------------------------------------------------------
-# RESULTS
-# ------------------------------------------------------------
-
 total_duplicated = len(duplicated_ids)
 
 print("\n")
@@ -202,10 +184,6 @@ for column_name, ids in results:
         f"({percentage:6.2f}%)"
     )
 
-# ------------------------------------------------------------
-# DUPLICATION DISTRIBUTION
-# ------------------------------------------------------------
-
 print("\n")
 print("=" * 70)
 print("DUPLICATION DISTRIBUTION")
@@ -241,10 +219,6 @@ for percentile in [25, 50, 75, 90, 95, 99]:
         f"{percentile:>3}th percentile: "
         f"{value:,.0f}"
     )
-
-# ------------------------------------------------------------
-# COMMON DUPLICATION SIZES
-# ------------------------------------------------------------
 
 print("\n")
 print("Most common duplication counts:")

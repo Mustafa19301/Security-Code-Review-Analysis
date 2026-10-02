@@ -2,26 +2,13 @@ import pandas as pd
 from collections import Counter, defaultdict
 import os
 
-# ============================================================
-# SETTINGS
-# ============================================================
-
 INPUT_FILE = "data/raw/ghtorrent-2019-05-20.csv"
 OUTPUT_FILE = "data/processed/unique_comments.csv"
 
 CHUNK_SIZE = 50_000
 
-
-# ============================================================
-# CREATE OUTPUT DIRECTORY
-# ============================================================
-
 os.makedirs("data/processed", exist_ok=True)
 
-
-# ============================================================
-# DATA STRUCTURES
-# ============================================================
 
 # For each comment_id, store:
 #
@@ -42,11 +29,6 @@ comment_commit = {}
 
 repo_counts = defaultdict(Counter)
 language_counts = defaultdict(Counter)
-
-
-# ============================================================
-# PASS 1
-# ============================================================
 
 print("=" * 70)
 print("CREATING UNIQUE COMMENT DATASET")
@@ -71,41 +53,21 @@ for chunk_number, chunk in enumerate(
 
         comment_id = row.comment_id
 
-        # ----------------------------------------------------
-        # Store comment text
-        # ----------------------------------------------------
-
         if comment_id not in comment_text:
 
             comment_text[comment_id] = row.comment
-
-        # ----------------------------------------------------
-        # Store PR ID
-        # ----------------------------------------------------
 
         if comment_id not in comment_pr:
 
             comment_pr[comment_id] = row.pr_id
 
-        # ----------------------------------------------------
-        # Store commit ID
-        # ----------------------------------------------------
-
         if comment_id not in comment_commit:
 
             comment_commit[comment_id] = row.c_id
 
-        # ----------------------------------------------------
-        # Count repositories
-        # ----------------------------------------------------
-
         if pd.notna(row.repo):
 
             repo_counts[comment_id][str(row.repo)] += 1
-
-        # ----------------------------------------------------
-        # Count languages
-        # ----------------------------------------------------
 
         if pd.notna(row.language):
 
@@ -131,20 +93,12 @@ print(
 )
 
 
-# ============================================================
-# CREATE UNIQUE DATASET
-# ============================================================
-
 print("\nCreating canonical records...")
 print("-" * 70)
 
 records = []
 
 for comment_id in comment_text:
-
-    # --------------------------------------------------------
-    # Determine canonical repository
-    # --------------------------------------------------------
 
     if repo_counts[comment_id]:
 
@@ -153,10 +107,6 @@ for comment_id in comment_text:
     else:
 
         canonical_repo = None
-
-    # --------------------------------------------------------
-    # Determine canonical language
-    # --------------------------------------------------------
 
     if language_counts[comment_id]:
 
@@ -169,10 +119,6 @@ for comment_id in comment_text:
 
         canonical_language = None
 
-    # --------------------------------------------------------
-    # Create record
-    # --------------------------------------------------------
-
     records.append(
         {
             "comment_id": comment_id,
@@ -184,17 +130,7 @@ for comment_id in comment_text:
         }
     )
 
-
-# ============================================================
-# CREATE DATAFRAME
-# ============================================================
-
 df = pd.DataFrame(records)
-
-
-# ============================================================
-# SAVE DATASET
-# ============================================================
 
 print("\nSaving processed dataset...")
 print("-" * 70)
@@ -203,11 +139,6 @@ df.to_csv(
     OUTPUT_FILE,
     index=False
 )
-
-
-# ============================================================
-# FINAL SUMMARY
-# ============================================================
 
 print("\n")
 print("=" * 70)
@@ -254,10 +185,6 @@ for column in df.columns:
     )
 
 
-# ============================================================
-# MISSING VALUES
-# ============================================================
-
 print("\n")
 print("=" * 70)
 print("MISSING VALUES")
@@ -279,10 +206,6 @@ for column in df.columns:
         f" ({percentage:6.2f}%)"
     )
 
-
-# ============================================================
-# SAMPLE
-# ============================================================
 
 print("\n")
 print("=" * 70)

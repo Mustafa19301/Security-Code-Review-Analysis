@@ -2,17 +2,9 @@ import os
 import pandas as pd
 
 
-# ------------------------------------------------------------
-# FILE PATHS
-# ------------------------------------------------------------
-
 INPUT_FILE = "data/processed/security_candidates.csv"
 OUTPUT_FILE = "data/processed/security_review_sample.csv"
 
-
-# ------------------------------------------------------------
-# SETTINGS
-# ------------------------------------------------------------
 
 # Number of comments from each group
 STRONG_SAMPLE_SIZE = 100
@@ -21,10 +13,6 @@ NON_CANDIDATE_SAMPLE_SIZE = 100
 
 RANDOM_SEED = 42
 
-
-# ------------------------------------------------------------
-# LOAD SECURITY CANDIDATES
-# ------------------------------------------------------------
 
 print("=" * 70)
 print("CREATING SECURITY MANUAL-REVIEW SAMPLE")
@@ -35,11 +23,6 @@ print("\nLoading security_candidates.csv...")
 candidates = pd.read_csv(INPUT_FILE)
 
 print(f"Loaded {len(candidates):,} candidate comments.")
-
-
-# ------------------------------------------------------------
-# VALIDATE REQUIRED COLUMNS
-# ------------------------------------------------------------
 
 required_columns = [
     "comment_id",
@@ -65,11 +48,6 @@ if missing_columns:
         f"Missing required columns: {missing_columns}"
     )
 
-
-# ------------------------------------------------------------
-# SPLIT STRONG AND WEAK CANDIDATES
-# ------------------------------------------------------------
-
 strong_candidates = candidates[
     candidates["indicator_strength"].astype(str).str.lower() == "strong"
 ].copy()
@@ -82,10 +60,6 @@ weak_candidates = candidates[
 print(f"\nStrong candidates available: {len(strong_candidates):,}")
 print(f"Weak candidates available:   {len(weak_candidates):,}")
 
-
-# ------------------------------------------------------------
-# SAMPLE STRONG AND WEAK CANDIDATES
-# ------------------------------------------------------------
 
 strong_sample_size = min(
     STRONG_SAMPLE_SIZE,

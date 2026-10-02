@@ -170,9 +170,9 @@ print(f"Median length:          {length_series.median():.2f}")
 print(f"Minimum length:         {length_series.min():,}")
 print(f"Maximum length:         {length_series.max():,}")
 
-print("\n------------------------------------------------------------")
+print("\n")
 print("SECURITY KEYWORD CANDIDATES")
-print("------------------------------------------------------------")
+print("")
 
 print(
     f"Comments containing at least one security keyword: "
@@ -189,9 +189,9 @@ print("\nKeyword frequencies:")
 for keyword, count in security_keyword_counts.most_common():
     print(f"{keyword:<25} {count:>10,}")
 
-print("\n------------------------------------------------------------")
+print("\n")
 print("TOP LANGUAGES")
-print("------------------------------------------------------------")
+print("")
 
 for language, count in language_counts.most_common(20):
     print(f"{language:<25} {count:>10,}")

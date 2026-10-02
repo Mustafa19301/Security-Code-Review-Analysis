@@ -8,10 +8,6 @@ print("=" * 70)
 print("ANALYZING INCONSISTENT COMMENT IDs")
 print("=" * 70)
 
-# ------------------------------------------------------------
-# PASS 1: Find comment IDs with inconsistent core information
-# ------------------------------------------------------------
-
 comment_info = {}
 
 inconsistent_ids = set()
@@ -53,10 +49,6 @@ print("\nPass 1 complete.")
 
 print(f"\nTotal rows:              {total_rows:,}")
 print(f"Inconsistent comment IDs: {len(inconsistent_ids):,}")
-
-# ------------------------------------------------------------
-# PASS 2: Analyze every inconsistent comment ID
-# ------------------------------------------------------------
 
 print("\nPass 2: Analyzing inconsistent comments...")
 print("-" * 70)
@@ -113,10 +105,6 @@ for chunk_number, chunk in enumerate(
 
 print("\nPass 2 complete.")
 
-# ------------------------------------------------------------
-# CLASSIFY INCONSISTENCIES
-# ------------------------------------------------------------
-
 categories = {
     "Only language differs": 0,
     "Only repository differs": 0,
@@ -163,10 +151,6 @@ for comment_id, info in analysis.items():
     else:
         categories["Multiple fields differ"] += 1
 
-# ------------------------------------------------------------
-# PRINT RESULTS
-# ------------------------------------------------------------
-
 print("\n")
 print("=" * 70)
 print("INCONSISTENCY ANALYSIS RESULTS")
@@ -193,10 +177,6 @@ for category, count in categories.items():
         f"{count:>8,} "
         f"({percentage:6.2f}%)"
     )
-
-# ------------------------------------------------------------
-# SUMMARY OF FIELD DIFFERENCES
-# ------------------------------------------------------------
 
 field_counts = {
     "Comment": 0,
@@ -241,10 +221,6 @@ for field, count in field_counts.items():
         f"{count:>8,} "
         f"({percentage:6.2f}%)"
     )
-
-# ------------------------------------------------------------
-# SHOW EXAMPLES
-# ------------------------------------------------------------
 
 print("\n")
 print("=" * 70)
