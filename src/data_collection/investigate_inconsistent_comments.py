@@ -6,10 +6,6 @@ CHUNK_SIZE = 50_000
 # Number of inconsistent comment IDs we want to inspect
 MAX_IDS_TO_INSPECT = 10
 
-# ------------------------------------------------------------
-# PASS 1: Find comment IDs with inconsistent information
-# ------------------------------------------------------------
-
 inconsistent_ids = set()
 comment_info = {}
 
@@ -73,11 +69,6 @@ for comment_id in sorted(inconsistent_ids):
 
 print(f"\nNumber selected for inspection: {len(inconsistent_ids)}")
 
-
-# ------------------------------------------------------------
-# PASS 2: Retrieve every row for those comment IDs
-# ------------------------------------------------------------
-
 print("\n" + "=" * 60)
 print("PASS 2: INSPECTING SELECTED COMMENT IDs")
 print("=" * 60)
@@ -108,10 +99,6 @@ if matching_rows:
     result = result.sort_values(
         by=["comment_id", "pr_id", "c_id"]
     )
-
-    # --------------------------------------------------------
-    # Print each inconsistent comment ID separately
-    # --------------------------------------------------------
 
     for comment_id in sorted(inconsistent_ids):
 

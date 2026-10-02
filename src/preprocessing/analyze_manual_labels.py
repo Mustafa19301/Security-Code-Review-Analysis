@@ -1,16 +1,6 @@
 import pandas as pd
 
-
-# ------------------------------------------------------------
-# FILE PATHS
-# ------------------------------------------------------------
-
 REVIEW_FILE = "data/processed/security_review_sample.csv"
-
-
-# ------------------------------------------------------------
-# LOAD REVIEWED SAMPLE
-# ------------------------------------------------------------
 
 print("=" * 70)
 print("ANALYZING MANUAL SECURITY LABELS")
@@ -25,10 +15,6 @@ for column in df.columns:
     print(f"  - {column}")
 
 
-# ------------------------------------------------------------
-# CLEAN MANUAL LABELS
-# ------------------------------------------------------------
-
 df["manual_label"] = pd.to_numeric(
     df["manual_label"],
     errors="coerce"
@@ -37,10 +23,6 @@ df["manual_label"] = pd.to_numeric(
 df = df.dropna(subset=["manual_label"]).copy()
 df["manual_label"] = df["manual_label"].astype(int)
 
-
-# ------------------------------------------------------------
-# OVERALL LABEL DISTRIBUTION
-# ------------------------------------------------------------
 
 print("\n" + "-" * 70)
 print("OVERALL MANUAL LABEL DISTRIBUTION")
@@ -63,11 +45,6 @@ for label, count in label_counts.items():
         f"{count:,} ({percentage:.2f}%)"
     )
 
-
-# ------------------------------------------------------------
-# REVIEW GROUP VS MANUAL LABEL
-# ------------------------------------------------------------
-
 print("\n" + "-" * 70)
 print("REVIEW GROUP VS MANUAL LABEL")
 print("-" * 70)
@@ -78,11 +55,6 @@ group_table = pd.crosstab(
 )
 
 print(group_table)
-
-
-# ------------------------------------------------------------
-# PERCENTAGES WITHIN EACH REVIEW GROUP
-# ------------------------------------------------------------
 
 print("\n" + "-" * 70)
 print("PERCENTAGES WITHIN EACH REVIEW GROUP")
@@ -95,11 +67,6 @@ group_percentage_table = pd.crosstab(
 ) * 100
 
 print(group_percentage_table.round(2))
-
-
-# ------------------------------------------------------------
-# STRONG-CANDIDATE PRECISION
-# ------------------------------------------------------------
 
 print("\n" + "-" * 70)
 print("CANDIDATE QUALITY")
@@ -124,11 +91,6 @@ print(
     f"clearly security-related: {candidate_precision:.2f}%"
 )
 
-
-# ------------------------------------------------------------
-# STRONG VS WEAK PRECISION
-# ------------------------------------------------------------
-
 for group_name in [
     "strong_candidate",
     "weak_candidate",
@@ -152,11 +114,6 @@ for group_name in [
         f"({precision:.2f}%)"
     )
 
-
-# ------------------------------------------------------------
-# FALSE POSITIVE EXAMPLES
-# ------------------------------------------------------------
-
 print("\n" + "-" * 70)
 print("EXAMPLES OF FALSE POSITIVES")
 print("-" * 70)
@@ -179,10 +136,6 @@ for _, row in false_positives.head(10).iterrows():
     print("Comment:", row["comment"])
     print("Review notes:", row["review_notes"])
 
-
-# ------------------------------------------------------------
-# SAVE CLEANED REVIEW DATA
-# ------------------------------------------------------------
 
 output_file = "data/processed/security_review_sample_clean.csv"
 

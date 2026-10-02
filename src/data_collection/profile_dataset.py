@@ -90,11 +90,6 @@ for chunk_number, chunk in enumerate(
         f"| {total_rows:,} rows"
     )
 
-
-# --------------------------------------------------
-# Final report
-# --------------------------------------------------
-
 print("\n")
 print("=" * 60)
 print("DATASET PROFILE")

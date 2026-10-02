@@ -6,11 +6,6 @@ CHUNK_SIZE = 50_000
 # Number of inconsistent comment IDs to inspect
 MAX_IDS_TO_INSPECT = 10
 
-
-# ============================================================
-# PASS 1: Find inconsistent comment IDs
-# ============================================================
-
 print("=" * 70)
 print("PASS 1: FINDING INCONSISTENT COMMENT IDs")
 print("=" * 70)
@@ -71,11 +66,6 @@ print(
 print("\nIDs:")
 for comment_id in ids_to_inspect:
     print(f"  {comment_id}")
-
-
-# ============================================================
-# PASS 2: Collect all rows for selected IDs
-# ============================================================
 
 print("\n" + "=" * 70)
 print("PASS 2: INSPECTING SELECTED COMMENT IDs")
@@ -185,11 +175,6 @@ if selected_rows:
 
 else:
     print("\nNo matching rows were found.")
-
-
-# ============================================================
-# COMPLETE
-# ============================================================
 
 print("\n" + "=" * 70)
 print("INSPECTION COMPLETE")

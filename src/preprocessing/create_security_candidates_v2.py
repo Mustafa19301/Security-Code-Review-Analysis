@@ -3,22 +3,10 @@ import re
 import pandas as pd
 
 
-# --------------------------------------------------
-# File paths
-# --------------------------------------------------
-
 INPUT_FILE = "data/processed/unique_comments.csv"
 OUTPUT_FILE = "data/processed/security_candidates_v2.csv"
 
 CHUNK_SIZE = 100_000
-
-
-# --------------------------------------------------
-# High-confidence security indicators
-# --------------------------------------------------
-# These terms are generally strong evidence that a
-# comment may be related to a security vulnerability.
-# --------------------------------------------------
 
 HIGH_CONFIDENCE_INDICATORS = [
     "security vulnerability",
@@ -52,13 +40,6 @@ HIGH_CONFIDENCE_INDICATORS = [
 ]
 
 
-# --------------------------------------------------
-# Contextual security terms
-# --------------------------------------------------
-# These terms are not always security-related by
-# themselves. They need additional context.
-# --------------------------------------------------
-
 CONTEXTUAL_INDICATORS = [
     "vulnerability",
     "vulnerable",
@@ -81,14 +62,6 @@ CONTEXTUAL_INDICATORS = [
     "security sensitive",
 ]
 
-
-# --------------------------------------------------
-# Weak indicators
-# --------------------------------------------------
-# These terms can occur in normal programming
-# discussions and should not automatically create
-# candidates.
-# --------------------------------------------------
 
 WEAK_INDICATORS = [
     "authentication",
@@ -121,10 +94,6 @@ WEAK_INDICATORS = [
     "sandbox",
 ]
 
-
-# --------------------------------------------------
-# Security categories
-# --------------------------------------------------
 
 CATEGORY_PATTERNS = {
     "vulnerability": [
@@ -224,11 +193,6 @@ CATEGORY_PATTERNS = {
     ],
 }
 
-
-# --------------------------------------------------
-# Compile regular expressions
-# --------------------------------------------------
-
 HIGH_CONFIDENCE_PATTERNS = {
     indicator: re.compile(
         r"\b" + re.escape(indicator) + r"\b",
@@ -264,10 +228,6 @@ CATEGORY_COMPILED_PATTERNS = {
     for category, indicators in CATEGORY_PATTERNS.items()
 }
 
-
-# --------------------------------------------------
-# Detection helper functions
-# --------------------------------------------------
 
 def find_matches(text, compiled_patterns):
     """
@@ -368,25 +328,12 @@ def detect_security_indicators(comment):
 
     categories = find_categories(text)
 
-    # --------------------------------------------------
-    # Rule 1: High-confidence candidate
-    # --------------------------------------------------
-
     if len(high_confidence_matches) > 0:
         candidate_type = "high_confidence"
         indicator_strength = "strong"
         is_candidate = True
 
     else:
-        # --------------------------------------------------
-        # Rule 2: Contextual candidate
-        # --------------------------------------------------
-        # Require:
-        # - At least one contextual term
-        # - At least one additional weak security term
-        # - At least one meaningful category
-        # --------------------------------------------------
-
         non_generic_weak_matches = [
             match
             for match in weak_matches
@@ -412,14 +359,6 @@ def detect_security_indicators(comment):
             is_candidate = True
 
         else:
-            # --------------------------------------------------
-            # Rule 3: Weak candidate
-            # --------------------------------------------------
-            # Require at least three weak indicators.
-            # This prevents a single common term such as
-            # "token" or "permission" from being selected.
-            # --------------------------------------------------
-
             weak_candidate = len(weak_matches) >= 3
 
             if weak_candidate:
@@ -430,14 +369,6 @@ def detect_security_indicators(comment):
                 candidate_type = "not_candidate"
                 indicator_strength = "none"
                 is_candidate = False
-
-    # --------------------------------------------------
-    # Calculate score
-    # --------------------------------------------------
-    # High-confidence indicators receive more weight.
-    # Contextual indicators receive medium weight.
-    # Weak indicators receive one point.
-    # --------------------------------------------------
 
     candidate_score = (
         len(high_confidence_matches) * 5
@@ -458,11 +389,6 @@ def detect_security_indicators(comment):
         "candidate_type": candidate_type,
         "is_candidate": is_candidate,
     }
-
-
-# --------------------------------------------------
-# Main processing function
-# --------------------------------------------------
 
 def main():
     if not os.path.exists(INPUT_FILE):

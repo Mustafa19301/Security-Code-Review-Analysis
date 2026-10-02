@@ -2,17 +2,8 @@ import pandas as pd
 import re
 from collections import Counter
 
-# ============================================================
-# SETTINGS
-# ============================================================
-
 INPUT_FILE = "data/processed/unique_comments.csv"
 CHUNK_SIZE = 100_000
-
-
-# ============================================================
-# SECURITY KEYWORDS
-# ============================================================
 
 SECURITY_KEYWORDS = [
     "security",
@@ -68,11 +59,6 @@ SECURITY_KEYWORDS = [
     "cve"
 ]
 
-
-# ============================================================
-# HELPER FUNCTION
-# ============================================================
-
 def contains_security_keyword(text):
     """
     Returns True if a comment contains at least one
@@ -91,10 +77,6 @@ def contains_security_keyword(text):
 
     return False
 
-
-# ============================================================
-# INITIALIZE COUNTERS
-# ============================================================
 
 total_comments = 0
 
@@ -117,11 +99,6 @@ security_language_counts = Counter()
 
 security_keyword_counts = Counter()
 
-
-# ============================================================
-# PROCESS DATASET
-# ============================================================
-
 print("=" * 70)
 print("COMMENT ANALYSIS")
 print("=" * 70)
@@ -140,17 +117,9 @@ for chunk_number, chunk in enumerate(
 
     total_comments += len(chunk)
 
-    # --------------------------------------------------------
-    # Process each comment
-    # --------------------------------------------------------
-
     for row in chunk.itertuples(index=False):
 
         comment = row.comment
-
-        # ----------------------------------------------------
-        # Missing / empty comments
-        # ----------------------------------------------------
 
         if pd.isna(comment):
 
@@ -165,17 +134,10 @@ for chunk_number, chunk in enumerate(
 
             empty_comments += 1
 
-        # ----------------------------------------------------
-        # Comment length
-        # ----------------------------------------------------
 
         length = len(comment)
 
         comment_lengths.append(length)
-
-        # ----------------------------------------------------
-        # Short comments
-        # ----------------------------------------------------
 
         if length <= 10:
 
@@ -185,10 +147,6 @@ for chunk_number, chunk in enumerate(
 
             short_comments += 1
 
-        # ----------------------------------------------------
-        # URLs
-        # ----------------------------------------------------
-
         if re.search(
             r"https?://|www\.",
             comment,
@@ -196,10 +154,6 @@ for chunk_number, chunk in enumerate(
         ):
 
             comments_with_urls += 1
-
-        # ----------------------------------------------------
-        # Code indicators
-        # ----------------------------------------------------
 
         code_indicators = [
             "```",
@@ -236,20 +190,12 @@ for chunk_number, chunk in enumerate(
 
             comments_with_code += 1
 
-        # ----------------------------------------------------
-        # Word frequency
-        # ----------------------------------------------------
-
         words = re.findall(
             r"\b[a-zA-Z][a-zA-Z0-9_'-]*\b",
             comment.lower()
         )
 
         word_frequency.update(words)
-
-        # ----------------------------------------------------
-        # Security keyword analysis
-        # ----------------------------------------------------
 
         if contains_security_keyword(comment):
 
@@ -275,10 +221,6 @@ for chunk_number, chunk in enumerate(
 
             security_language_counts[str(language)] += 1
 
-        # ----------------------------------------------------
-        # Overall language distribution
-        # ----------------------------------------------------
-
         language = row.language
 
         if pd.isna(language):
@@ -287,20 +229,11 @@ for chunk_number, chunk in enumerate(
 
         language_counts[str(language)] += 1
 
-    # --------------------------------------------------------
-    # Progress
-    # --------------------------------------------------------
-
     if chunk_number % 10 == 0:
 
         print(
             f"Processed {total_comments:,} comments..."
         )
-
-
-# ============================================================
-# CALCULATE STATISTICS
-# ============================================================
 
 comment_lengths_series = pd.Series(
     comment_lengths
@@ -311,11 +244,6 @@ median_length = comment_lengths_series.median()
 
 minimum_length = comment_lengths_series.min()
 maximum_length = comment_lengths_series.max()
-
-
-# ============================================================
-# DISPLAY RESULTS
-# ============================================================
 
 print("\n")
 print("=" * 70)
@@ -352,11 +280,6 @@ print(
     f" {comments_with_code:,}"
 )
 
-
-# ============================================================
-# COMMENT LENGTH
-# ============================================================
-
 print("\n")
 print("=" * 70)
 print("COMMENT LENGTH STATISTICS")
@@ -382,11 +305,6 @@ print(
     f"{maximum_length}"
 )
 
-
-# ============================================================
-# SECURITY CANDIDATES
-# ============================================================
-
 print("\n")
 print("=" * 70)
 print("SECURITY KEYWORD ANALYSIS")
@@ -406,11 +324,6 @@ print(
     f"{security_percentage:.2f}%"
 )
 
-
-# ============================================================
-# SECURITY KEYWORDS
-# ============================================================
-
 print("\n")
 print("=" * 70)
 print("MOST COMMON SECURITY KEYWORDS")
@@ -427,11 +340,6 @@ for keyword, count in security_keyword_counts.most_common(30):
         f"{count:>10,}"
         f" ({percentage:6.2f}%)"
     )
-
-
-# ============================================================
-# SECURITY CANDIDATES BY LANGUAGE
-# ============================================================
 
 print("\n")
 print("=" * 70)
@@ -450,11 +358,6 @@ for language, count in security_language_counts.most_common(30):
         f" ({percentage:6.2f}%)"
     )
 
-
-# ============================================================
-# LANGUAGE DISTRIBUTION
-# ============================================================
-
 print("\n")
 print("=" * 70)
 print("OVERALL LANGUAGE DISTRIBUTION")
@@ -471,11 +374,6 @@ for language, count in language_counts.most_common(30):
         f"{count:>10,}"
         f" ({percentage:6.2f}%)"
     )
-
-
-# ============================================================
-# MOST COMMON WORDS
-# ============================================================
 
 print("\n")
 print("=" * 70)
@@ -563,11 +461,6 @@ for word, count in filtered_words.most_common(50):
         f"{word:<25}"
         f"{count:>10,}"
     )
-
-
-# ============================================================
-# FINAL SUMMARY
-# ============================================================
 
 print("\n")
 print("=" * 70)
