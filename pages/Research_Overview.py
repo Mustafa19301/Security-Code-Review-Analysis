@@ -20,8 +20,8 @@ page_header(
     "PROJECT CONTEXT",
     "Research Overview",
     "Analyzing Code Review Dataset for Security Vulnerability Detection. "
-    "This project investigates machine-learning methods for identifying "
-    "security-related code-review activity across GitHub and Gerrit.",
+    "This project investigates machine learning methods for identifying "
+    "security related code review activity across GitHub and Gerrit.",
 )
 
 section_heading(
@@ -32,8 +32,8 @@ section_heading(
 objectives = [
     "Collect and prepare code review data from GitHub and Gerrit.",
     "Extract code diffs and relevant features for analysis.",
-    "Investigate patterns associated with security-related changes.",
-    "Compare machine-learning approaches for identifying security-related records.",
+    "Investigate patterns associated with security related changes.",
+    "Compare machine learning approaches for identifying security related records.",
     "Evaluate model performance, including the impact of class imbalance.",
 ]
 
@@ -64,7 +64,7 @@ with github_col:
           <p>
             Code-review comments and associated project information
             are used to investigate whether review comments contain
-            indicators of security-related discussions.
+            indicators of security related discussions.
           </p>
           <span class="cr-pill">COMMENT CLASSIFICATION</span>
         </div>
@@ -93,7 +93,7 @@ with gerrit_col:
 st.info(
     "GitHub and Gerrit are analyzed separately. Their models use "
     "different inputs and evaluation setups, so their scores are "
-    "not a direct head-to-head comparison."
+    "not a direct head to head comparison."
 )
 
 st.write("")
@@ -127,7 +127,7 @@ pipeline_steps = [
     (
         "04",
         "Data Processing",
-        "Cleaned records, expanded the security-related dataset, "
+        "Cleaned records, expanded the security related dataset, "
         "prepared classification labels, and retained revisions "
         "with non-empty code diffs.",
         "Python · Pandas",
@@ -213,8 +213,8 @@ dataset_metrics = st.columns(4)
 
 finalized_metrics = [
     ("Modelling revisions", 1774),
-    ("Not security-related", 1382),
-    ("Security-related", 392),
+    ("Not security related", 1382),
+    ("Security related", 392),
     ("Review groups", 808),
 ]
 
@@ -236,26 +236,26 @@ distribution_col1, distribution_col2 = st.columns(2)
 
 with distribution_col1:
     st.metric(
-        "Not security-related",
+        "Not security related",
         f"{negative_percentage:.1f}%",
         help="1,382 revisions",
     )
 
 with distribution_col2:
     st.metric(
-        "Security-related",
+        "Security related",
         f"{positive_percentage:.1f}%",
         help="392 revisions",
     )
 
 st.progress(
     positive_percentage / 100,
-    text="Proportion of security-related revisions",
+    text="Proportion of security related revisions",
 )
 
 st.caption(
     "The finalized modelling dataset contains 1,774 revisions "
-    "with non-empty code diffs. Each revision is assigned to a "
+    "with non empty code diffs. Each revision is assigned to a "
     "review group using its review number."
 )
 
@@ -311,9 +311,248 @@ st.markdown("### GitHub comment analysis")
 
 st.write(
     "The GitHub experiments use review comment text to classify "
-    "whether a comment is security-related. This is separate from "
+    "whether a comment is security related. This is separate from "
     "the Gerrit code-diff model."
 )
+
+st.write("")
+
+section_heading(
+    "Gerrit feature extension experiments",
+    "Additional experiments investigated whether alternative text representations "
+    "and security sensitive code indicators could improve classification performance.",
+)
+
+st.write(
+    "The original Gerrit model used TF-IDF to represent code diffs. "
+    "The feature extension experiments explored Word2Vec embeddings "
+    "and manually engineered indicators based on security sensitive "
+    "Java APIs and coding patterns."
+)
+
+feature_col1, feature_col2 = st.columns(2)
+
+with feature_col1:
+    st.markdown(
+        """
+        <div class="cr-card" style="min-height:230px">
+          <div class="cr-eyebrow">TEXT REPRESENTATION</div>
+          <h3>Word2Vec embeddings</h3>
+          <p>
+            Word2Vec learned 100-dimensional word representations
+            from the training-fold code diffs. The word vectors
+            were averaged to create a numerical representation
+            for each code diff.
+          </p>
+          <span class="cr-pill">100-DIMENSIONAL VECTORS</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+with feature_col2:
+    st.markdown(
+        """
+        <div class="cr-card" style="min-height:230px">
+          <div class="cr-eyebrow">FEATURE ENGINEERING</div>
+          <h3>Security sensitive API indicators</h3>
+          <p>
+            Regex-based indicators counted selected security related
+            API references and coding patterns in added code lines.
+            These features provided additional information beyond
+            general TF-IDF text representation.
+          </p>
+          <span class="cr-pill">6 FEATURE CATEGORIES</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+st.markdown("**Security sensitive API indicator categories**")
+
+api_categories = [
+    (
+        "Cryptography",
+        "References to APIs such as Cipher, MessageDigest, SecretKey, "
+        "KeyGenerator, Signature, and SecureRandom.",
+    ),
+    (
+        "Authentication",
+        "References to authentication related APIs such as Authenticator, "
+        "Credentials, Principal, and LoginContext.",
+    ),
+    (
+        "Authorization",
+        "References to permission and access control APIs such as "
+        "Permission, AccessController, ACL, and Role.",
+    ),
+    (
+        "Secure communication",
+        "References to TLS, SSLContext, TrustManager, and related "
+        "secure communication APIs.",
+    ),
+    (
+        "SQL protection",
+        "References to PreparedStatement, prepareStatement, and "
+        "parameterized SQL operations.",
+    ),
+    (
+        "Input validation",
+        "References to validation and sanitization patterns, including "
+        "validate, sanitize, Pattern.compile, and requireNonNull.",
+    ),
+]
+
+for category, description in api_categories:
+    with st.container(border=True):
+        st.markdown(f"**{category}**")
+        st.write(description)
+
+st.caption(
+    "The indicators were extracted from added lines in code diffs. "
+    "They represent selected API and coding pattern occurrences, "
+    "not a complete assessment of whether a change is secure."
+)
+
+st.write("")
+
+st.markdown("**Compared feature configurations**")
+
+feature_comparison = [
+    (
+        "TF-IDF baseline",
+        "TF-IDF code-diff features.",
+    ),
+    (
+        "Word2Vec",
+        "Averaged Word2Vec embeddings with Logistic Regression.",
+    ),
+    (
+        "TF-IDF + API indicators",
+        "TF-IDF text features combined with six API indicator categories.",
+    ),
+    (
+        "TF-IDF + Word2Vec + API indicators",
+        "A combined representation using all three feature approaches.",
+    ),
+]
+
+for name, description in feature_comparison:
+    with st.container(border=True):
+        left, right = st.columns([1, 2])
+
+        with left:
+            st.markdown(f"**{name}**")
+
+        with right:
+            st.write(description)
+
+st.write("")
+
+st.markdown("**Feature extension experiment results**")
+
+st.write(
+    "The following results are mean scores across five grouped "
+    "cross-validation folds."
+)
+
+extension_results = [
+    {
+        "Configuration": "TF-IDF baseline",
+        "F1-score": 0.7623,
+        "PR-AUC": 0.8616,
+        "Balanced accuracy": 0.8662,
+    },
+    {
+        "Configuration": "Word2Vec",
+        "F1-score": 0.5895,
+        "PR-AUC": 0.6126,
+        "Balanced accuracy": 0.7685,
+    },
+    {
+        "Configuration": "TF-IDF + API indicators",
+        "F1-score": 0.7763,
+        "PR-AUC": 0.8459,
+        "Balanced accuracy": 0.8661,
+    },
+    {
+        "Configuration": "TF-IDF + Word2Vec + API indicators",
+        "F1-score": 0.7678,
+        "PR-AUC": 0.8551,
+        "Balanced accuracy": 0.8672,
+    },
+]
+
+st.dataframe(
+    extension_results,
+    use_container_width=True,
+    hide_index=True,
+    column_config={
+        "F1-score": st.column_config.NumberColumn(
+            format="%.4f"
+        ),
+        "PR-AUC": st.column_config.NumberColumn(
+            format="%.4f"
+        ),
+        "Balanced accuracy": st.column_config.NumberColumn(
+            format="%.4f"
+        ),
+    },
+)
+
+best_f1 = max(
+    extension_results,
+    key=lambda result: result["F1-score"],
+)
+
+best_pr_auc = max(
+    extension_results,
+    key=lambda result: result["PR-AUC"],
+)
+
+result_col1, result_col2 = st.columns(2)
+
+with result_col1:
+    st.metric(
+        "Highest F1-score",
+        f"{best_f1['F1-score']:.2%}",
+        help=best_f1["Configuration"],
+    )
+
+with result_col2:
+    st.metric(
+        "Highest PR-AUC",
+        f"{best_pr_auc['PR-AUC']:.2%}",
+        help=best_pr_auc["Configuration"],
+    )
+
+st.info(
+    "The TF-IDF + API indicators configuration achieved the highest "
+    "F1-score (77.63%), while the original TF-IDF baseline achieved "
+    "the highest mean PR-AUC (86.16%). Since PR-AUC was the primary "
+    "model selection criterion, the TF-IDF baseline remains the "
+    "selected Gerrit deployment model."
+)
+
+st.markdown("**Research interpretation**")
+
+st.write(
+    "The API indicators improved precision and F1-score compared "
+    "with the TF-IDF baseline, although recall and PR-AUC decreased "
+    "slightly. Word2Vec alone performed considerably worse, while "
+    "combining Word2Vec with the other features did not outperform "
+    "the API-indicator configuration on F1-score or the baseline "
+    "on PR-AUC."
+)
+
+st.caption(
+    "These experiments provide an initial comparison of alternative "
+    "feature representations. Further validation on independently "
+    "labelled data and additional code review projects would help "
+    "establish how well the observed improvements generalize."
+)
+
+st.write("")
 
 st.divider()
 
@@ -321,8 +560,8 @@ section_heading("Research scope and interpretation")
 
 st.info(
     "CodeReview Sentinel is a research prototype intended to "
-    "support the identification of potentially security-related "
-    "code changes. A security-related prediction does not "
+    "support the identification of potentially security related "
+    "code changes. A security related prediction does not "
     "independently confirm that a code change contains an "
     "exploitable vulnerability. Predictions require developer review."
 )

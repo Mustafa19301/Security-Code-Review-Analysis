@@ -1,13 +1,16 @@
+
 from pathlib import Path
 
 import joblib
 import pandas as pd
 import streamlit as st
 
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
 DATA_FILES = {
+
     "github_final": (
         "data/processed/final_security.csv"
     ),
@@ -21,6 +24,7 @@ DATA_FILES = {
         "data/processed/interpretation_outputs/"
         "final_model_summary.csv"
     ),
+
 
     "gerrit_final": (
         "data/gerrit/couchbase_java_client/processed/"
@@ -76,7 +80,37 @@ DATA_FILES = {
         "results/machine_learning/gerrit_expanded/"
         "predictions/expanded_gerrit_false_negatives.csv"
     ),
+
+    "gerrit_feature_extension_comparison": (
+        "notebooks/Gerrit/results/machine_learning/"
+        "feature_extension/feature_extension_comparison.csv"
+    ),
+
+    "gerrit_feature_extension_baseline_folds": (
+        "notebooks/Gerrit/results/machine_learning/"
+        "feature_extension/"
+        "baseline:_tf-idf_logistic_regression_random_oversampling_fold_results.csv"
+    ),
+
+    "gerrit_feature_extension_word2vec_folds": (
+        "notebooks/Gerrit/results/machine_learning/"
+        "feature_extension/"
+        "word2vec_logistic_regression_random_oversampling_fold_results.csv"
+    ),
+
+    "gerrit_feature_extension_api_indicators_folds": (
+        "notebooks/Gerrit/results/machine_learning/"
+        "feature_extension/"
+        "tf-idf_security_api_indicators_random_oversampling_fold_results.csv"
+    ),
+
+    "gerrit_feature_extension_combined_folds": (
+        "notebooks/Gerrit/results/machine_learning/"
+        "feature_extension/"
+        "tf-idf_word2vec_api_indicators_fold_results.csv"
+    ),
 }
+
 
 MODEL_FILES = {
 
@@ -90,6 +124,7 @@ MODEL_FILES = {
         "gerrit_expanded_tfidf_logistic_regression.joblib"
     ),
 }
+
 
 def get_data_path(file_key):
     """
@@ -144,6 +179,7 @@ def load_csv(file_key):
         path,
         low_memory=False,
     )
+
 
 def get_file_information(file_key):
     """

@@ -735,7 +735,7 @@ button_col, clear_col = st.columns(2)
 
 with button_col:
     analyze_button = st.button(
-        "⚡ Analyze code diff",
+        "Analyze code diff",
         type="primary",
         use_container_width=True,
     )
@@ -912,7 +912,7 @@ if result:
               security related class by Logistic Regression.
             - **Feature contributions:** terms that pushed the model's
               classification toward or away from the security related class.
-            - **Explanation filtering:** generic file-path and programming
+            - **Explanation filtering:** generic file path and programming
               terms may be hidden from the charts, but they remain part
               of the model's original prediction.
             - **Important:** review the actual code and surrounding

@@ -1,3 +1,5 @@
+import re
+
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -32,6 +34,112 @@ page_header(
     "class distributions, and sample records.",
 )
 
+
+API_INDICATOR_PATTERNS = {
+    "Cryptography": (
+        r"\b(?:Cipher|MessageDigest|SecretKey|KeyGenerator|"
+        r"Mac|Signature|SecureRandom|KeyStore)\b"
+    ),
+
+    "Authentication": (
+        r"\b(?:Authenticator|Credentials|Principal|Authentication|"
+        r"LoginContext|PasswordAuthentication)\b"
+    ),
+
+    "Authorization": (
+        r"\b(?:Permission|AccessController|AccessControlContext|"
+        r"ACL|Role|Authorization)\b"
+    ),
+
+    "Secure communication": (
+        r"\b(?:SSLContext|SSLSocket|TrustManager|X509TrustManager|"
+        r"HostnameVerifier|TLS|HttpsURLConnection)\b"
+    ),
+
+    "SQL protection": (
+        r"\b(?:PreparedStatement|prepareStatement|setString|"
+        r"setInt|CallableStatement)\b"
+    ),
+
+    "Input validation": (
+        r"\b(?:validate\w*|sanitize\w*|Pattern\.compile|"
+        r"Matcher|checkNotNull|requireNonNull|"
+        r"IllegalArgumentException)\b"
+    ),
+}
+
+
+def extract_added_lines(code_diff):
+    """
+    Extract added lines from a unified code diff.
+
+    Deleted lines and diff header lines are ignored.
+    """
+
+    if pd.isna(code_diff):
+        return ""
+
+    added_lines = []
+
+    for line in str(code_diff).splitlines():
+        if line.startswith("+++") or line.startswith("---"):
+            continue
+
+        if line.startswith("+"):
+            added_lines.append(line[1:])
+
+    return "\n".join(added_lines)
+
+
+def calculate_api_indicator_statistics(dataframe):
+    """
+    Calculate security sensitive API indicator statistics
+    from added lines in code diffs.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Total occurrences and number of revisions containing
+        each API indicator category.
+    """
+
+    if "code_diff" not in dataframe.columns:
+        return None
+
+    results = []
+
+    for category, pattern in API_INDICATOR_PATTERNS.items():
+
+        total_occurrences = 0
+        revisions_with_indicator = 0
+
+        for code_diff in dataframe["code_diff"]:
+
+            added_text = extract_added_lines(code_diff)
+
+            matches = re.findall(
+                pattern,
+                added_text,
+                flags=re.IGNORECASE,
+            )
+
+            occurrence_count = len(matches)
+
+            total_occurrences += occurrence_count
+
+            if occurrence_count > 0:
+                revisions_with_indicator += 1
+
+        results.append(
+            {
+                "API Category": category,
+                "Revisions with Indicator": revisions_with_indicator,
+                "Total Occurrences": total_occurrences,
+            }
+        )
+
+    return pd.DataFrame(results)
+
 dataset_options = {
     "GitHub — Finalized Dataset": "github_final",
     "Gerrit — Finalized Expanded Dataset": "gerrit_expanded_final",
@@ -62,22 +170,28 @@ if df is None:
     st.error("Unable to load the selected dataset.")
     st.stop()
 
-# Exclude internal metadata from missing-value reporting
-# GitHub: matched_strong, matched_weak
-# Gerrit: label_evidence_categories
+
+excluded_missing_columns = [
+    "label_evidence_categories",
+    "matched_strong",
+    "matched_weak",
+]
+
 missing_report_df = df.drop(
-    columns=[
-        "label_evidence_categories",
-        "matched_strong",
-        "matched_weak",
-    ],
+    columns=excluded_missing_columns,
     errors="ignore",
 )
 
 row_count = len(df)
 column_count = len(df.columns)
-missing_count = int(missing_report_df.isna().sum().sum())
-duplicate_count = int(df.duplicated().sum())
+
+missing_count = int(
+    missing_report_df.isna().sum().sum()
+)
+
+duplicate_count = int(
+    df.duplicated().sum()
+)
 
 st.markdown(
     f'<span class="cr-pill">{dataset_choice.upper()}</span>',
@@ -116,6 +230,7 @@ section_heading(
 profile_left, profile_right = st.columns([1.1, 1])
 
 with profile_left:
+
     type_counts = (
         df.dtypes.astype(str)
         .value_counts()
@@ -144,9 +259,19 @@ with profile_left:
         use_container_width=True,
     )
 
+
 with profile_right:
-    missing_data = missing_report_df.isna().sum().reset_index()
-    missing_data.columns = ["Column", "Missing Values"]
+
+    missing_data = (
+        missing_report_df.isna()
+        .sum()
+        .reset_index()
+    )
+
+    missing_data.columns = [
+        "Column",
+        "Missing Values",
+    ]
 
     missing_data = missing_data[
         missing_data["Missing Values"] > 0
@@ -156,10 +281,13 @@ with profile_right:
     )
 
     if missing_data.empty:
+
         st.success(
             "No missing values were found in this dataset."
         )
+
     else:
+
         fig = px.bar(
             missing_data.head(15),
             x="Missing Values",
@@ -183,14 +311,14 @@ with profile_right:
 
 st.write("")
 
-# Gerrit expanded dataset class distribution
 if (
     file_key == "gerrit_expanded_final"
     and "security_label_binary" in df.columns
 ):
+
     section_heading(
-        "Gerrit security-label distribution",
-        "Distribution of security-related and non-security-related revisions.",
+        "Gerrit security label distribution",
+        "Distribution of security related and non security related revisions.",
     )
 
     label_counts = (
@@ -201,8 +329,8 @@ if (
     )
 
     label_names = {
-        0: "Not security-related",
-        1: "Security-related",
+        0: "Not security related",
+        1: "Security related",
     }
 
     label_counts["Category"] = (
@@ -211,11 +339,14 @@ if (
         .fillna("Other / missing")
     )
 
-    label_counts["Category"] = label_counts["Category"].astype(str)
+    label_counts["Category"] = (
+        label_counts["Category"].astype(str)
+    )
 
     distribution_col, summary_col = st.columns([1.4, 1])
 
     with distribution_col:
+
         fig = px.bar(
             label_counts,
             x="Category",
@@ -238,7 +369,10 @@ if (
         )
 
     with summary_col:
-        valid_labels = df["security_label_binary"].dropna()
+
+        valid_labels = (
+            df["security_label_binary"].dropna()
+        )
 
         positive_count = int(
             (valid_labels == 1).sum()
@@ -248,24 +382,163 @@ if (
             (valid_labels == 0).sum()
         )
 
-        total_labelled = positive_count + negative_count
+        total_labelled = (
+            positive_count + negative_count
+        )
 
         if total_labelled > 0:
+
             st.metric(
-                "Security-related",
+                "Security related",
                 f"{positive_count:,}",
                 f"{positive_count / total_labelled * 100:.1f}% of labelled records",
             )
 
             st.metric(
-                "Not security-related",
+                "Not security related",
                 f"{negative_count:,}",
                 f"{negative_count / total_labelled * 100:.1f}% of labelled records",
             )
 
         st.caption(
-            "Binary labels: 0 = Not security-related; "
-            "1 = Security-related."
+            "Binary labels: 0 = Not security related; "
+            "1 = Security related."
+        )
+
+st.write("")
+
+if file_key == "gerrit_expanded_final":
+
+    section_heading(
+        "Security sensitive API indicator statistics",
+        "Occurrences of selected security sensitive Java APIs and coding patterns "
+        "in added code lines.",
+    )
+
+    api_statistics = calculate_api_indicator_statistics(df)
+
+    if api_statistics is None:
+
+        st.info(
+            "API indicator statistics require a code_diff column "
+            "in the selected dataset."
+        )
+
+    else:
+
+        total_api_occurrences = int(
+            api_statistics["Total Occurrences"].sum()
+        )
+
+        categories_found = int(
+            (
+                api_statistics["Total Occurrences"] > 0
+            ).sum()
+        )
+
+        revisions_with_any_indicator = 0
+
+        if "code_diff" in df.columns:
+
+            for code_diff in df["code_diff"]:
+
+                added_text = extract_added_lines(code_diff)
+
+                found_indicator = any(
+                    re.search(
+                        pattern,
+                        added_text,
+                        flags=re.IGNORECASE,
+                    )
+                    for pattern in API_INDICATOR_PATTERNS.values()
+                )
+
+                if found_indicator:
+                    revisions_with_any_indicator += 1
+
+        api_metric_cols = st.columns(3)
+
+        api_metrics = [
+            (
+                "Total occurrences",
+                total_api_occurrences,
+                "Across all six categories",
+            ),
+            (
+                "Categories detected",
+                categories_found,
+                "Categories with at least one match",
+            ),
+            (
+                "Revisions with indicators",
+                revisions_with_any_indicator,
+                "At least one matching indicator",
+            ),
+        ]
+
+        for col, (label, value, note) in zip(
+            api_metric_cols,
+            api_metrics,
+        ):
+
+            with col:
+
+                animated_metric_card(
+                    label,
+                    value,
+                    note=note,
+                    duration=1100,
+                )
+
+        st.write("")
+
+        indicator_col, table_col = st.columns([1.3, 1])
+
+        with indicator_col:
+
+            fig = px.bar(
+                api_statistics,
+                x="API Category",
+                y="Total Occurrences",
+                color="API Category",
+                text="Total Occurrences",
+                title="API indicator occurrences by category",
+                template="plotly_dark",
+            )
+
+            fig.update_layout(
+                showlegend=False,
+                xaxis_tickangle=-25,
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+            )
+
+            st.plotly_chart(
+                fig,
+                use_container_width=True,
+            )
+
+        with table_col:
+
+            st.markdown("**Indicator breakdown**")
+
+            st.dataframe(
+                api_statistics,
+                use_container_width=True,
+                hide_index=True,
+            )
+
+        st.caption(
+            "Statistics are calculated from added lines in code diffs. "
+            "Each matching API or pattern occurrence is counted. "
+            "A revision is counted once per category when it contains "
+            "at least one matching occurrence."
+        )
+
+        st.info(
+            "These indicators identify selected API references and "
+            "coding patterns. Their presence does not independently "
+            "establish whether a code change is vulnerable or secure."
         )
 
 st.write("")
@@ -283,6 +556,7 @@ search_text = st.text_input(
 display_df = df
 
 if search_text.strip():
+
     matches = df.astype(str).apply(
         lambda column: column.str.contains(
             search_text.strip(),
@@ -326,15 +600,48 @@ st.download_button(
 
 st.write("")
 
-section_heading("Column information")
+
+section_heading(
+    "Column information",
+    "Data types, missing values, and unique values for each dataset field.",
+)
+
+excluded_columns_present = [
+    column
+    for column in excluded_missing_columns
+    if column in df.columns
+]
+
+missing_counts = (
+    missing_report_df.isna()
+    .sum()
+)
+
+column_info_records = []
+
+for column in df.columns:
+
+    if column in excluded_columns_present:
+        missing_value_display = "Not reported"
+
+    else:
+        missing_value_display = int(
+            missing_counts.get(column, 0)
+        )
+
+    column_info_records.append(
+        {
+            "Column": column,
+            "Data Type": str(df[column].dtype),
+            "Missing Values": missing_value_display,
+            "Unique Values": int(
+                df[column].nunique(dropna=True)
+            ),
+        }
+    )
 
 column_info = pd.DataFrame(
-    {
-        "Column": df.columns,
-        "Data Type": df.dtypes.astype(str).values,
-        "Missing Values": missing_report_df.isna().sum().values,
-        "Unique Values": df.nunique(dropna=True).values,
-    }
+    column_info_records
 )
 
 st.dataframe(
@@ -344,14 +651,29 @@ st.dataframe(
 )
 
 with st.expander("View full missing-value report"):
+
     if missing_data.empty:
-        st.success("No missing values were found.")
+
+        st.success(
+            "No missing values were found in the reported columns."
+        )
+
     else:
+
         st.dataframe(
             missing_data,
             use_container_width=True,
             hide_index=True,
         )
+
+    if excluded_columns_present:
+
+        st.caption(
+            "Excluded internal metadata columns: "
+            + ", ".join(excluded_columns_present)
+            + ". Their missing values are not included in this report."
+        )
+
 
 st.caption(
     "Dataset statistics are calculated from the selected processed "

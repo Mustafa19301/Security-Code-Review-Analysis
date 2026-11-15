@@ -38,7 +38,6 @@ if github_df is None:
     st.error("GitHub model comparison file could not be found.")
     st.stop()
 
-
 section_heading(
     "GitHub model evaluation",
     "Results from the GitHub review-comment classification experiment.",
@@ -177,16 +176,12 @@ st.success(
     f"({best_github['f1_score'] * 100:.2f}%)."
 )
 
-
 st.divider()
 
 section_heading(
-    "Expanded Gerrit model evaluation",
+    "Gerrit model evaluation",
     "Mean results across five Stratified Group K-Fold cross-validation folds.",
 )
-
-# Values from Gerrit_Expanded_Model_Training.ipynb.
-# These are mean cross-validation results.
 
 expanded_gerrit_df = pd.DataFrame([
     {
@@ -240,7 +235,7 @@ with r3:
         float(best_expanded_gerrit["Mean_Recall"]) * 100,
         suffix="%",
         decimals=2,
-        note="Security-related class",
+        note="Security related class",
     )
 
 with r4:
@@ -343,11 +338,272 @@ with st.expander("View expanded Gerrit evaluation table"):
 
 st.info(
     "PR-AUC is particularly useful for the Gerrit experiment "
-    "because the security-related class is less common than the "
-    "non-security-related class. The selected configuration "
+    "because the security related class is less common than the "
+    "non-security related class. The selected configuration "
     "achieved the highest mean PR-AUC across the five folds."
 )
 
+
+st.divider()
+
+section_heading(
+    "Gerrit feature extension experiments",
+    "Additional experiments exploring alternative code representations "
+    "and security sensitive API indicators.",
+)
+
+st.markdown(
+    """
+    These experiments investigated whether incorporating additional
+    code-level features could improve the classification of
+    security-related Gerrit code changes.
+
+    Four approaches were evaluated using the same expanded Gerrit
+    dataset and five-fold Stratified Group K-Fold cross-validation.
+    """
+)
+
+
+feature_experiments_df = pd.DataFrame([
+    {
+        "Model": "TF-IDF Baseline",
+        "Accuracy": 0.885560,
+        "Balanced Accuracy": 0.866212,
+        "Precision": 0.705725,
+        "Recall": 0.831581,
+        "F1 Score": 0.762291,
+        "PR-AUC": 0.861571,
+    },
+    {
+        "Model": "Word2Vec",
+        "Accuracy": 0.758769,
+        "Balanced Accuracy": 0.768516,
+        "Precision": 0.472359,
+        "Recall": 0.785946,
+        "F1 Score": 0.589501,
+        "PR-AUC": 0.612589,
+    },
+    {
+        "Model": "TF-IDF + API Indicators",
+        "Accuracy": 0.896834,
+        "Balanced Accuracy": 0.866093,
+        "Precision": 0.745311,
+        "Recall": 0.811068,
+        "F1 Score": 0.776324,
+        "PR-AUC": 0.845922,
+    },
+    {
+        "Model": "TF-IDF + Word2Vec + API",
+        "Accuracy": 0.890077,
+        "Balanced Accuracy": 0.867237,
+        "Precision": 0.719501,
+        "Recall": 0.826388,
+        "F1 Score": 0.767783,
+        "PR-AUC": 0.855079,
+    },
+])
+
+best_feature_f1 = feature_experiments_df.loc[
+    feature_experiments_df["F1 Score"].idxmax()
+]
+
+best_feature_prauc = feature_experiments_df.loc[
+    feature_experiments_df["PR-AUC"].idxmax()
+]
+
+
+f1_col, pr_col, models_col = st.columns(3)
+
+with f1_col:
+    animated_metric_card(
+        "Highest mean F1",
+        float(best_feature_f1["F1 Score"]) * 100,
+        suffix="%",
+        decimals=2,
+        note="TF-IDF + API Indicators",
+    )
+
+with pr_col:
+    animated_metric_card(
+        "Highest mean PR-AUC",
+        float(best_feature_prauc["PR-AUC"]) * 100,
+        suffix="%",
+        decimals=2,
+        note="TF-IDF Baseline",
+    )
+
+with models_col:
+    animated_metric_card(
+        "Approaches evaluated",
+        len(feature_experiments_df),
+        note="Gerrit feature experiments",
+    )
+
+feature_f1_chart = feature_experiments_df[
+    ["Model", "F1 Score"]
+].copy()
+
+feature_f1_chart["F1 Score"] *= 100
+
+fig = px.bar(
+    feature_f1_chart,
+    x="Model",
+    y="F1 Score",
+    color="Model",
+    text_auto=".2f",
+    title="Feature extension experiments: F1 score",
+    labels={
+        "Model": "Feature representation",
+        "F1 Score": "Mean F1 score (%)",
+    },
+    template="plotly_dark",
+)
+
+fig.update_layout(
+    yaxis_range=[0, 100],
+    showlegend=False,
+    xaxis_tickangle=-15,
+    paper_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="rgba(0,0,0,0)",
+)
+
+st.plotly_chart(
+    fig,
+    use_container_width=True,
+)
+
+feature_pr_chart = feature_experiments_df[
+    ["Model", "PR-AUC"]
+].copy()
+
+feature_pr_chart["PR-AUC"] *= 100
+
+fig = px.bar(
+    feature_pr_chart,
+    x="Model",
+    y="PR-AUC",
+    color="Model",
+    text_auto=".2f",
+    title="Feature extension experiments: PR-AUC",
+    labels={
+        "Model": "Feature representation",
+        "PR-AUC": "Mean PR-AUC (%)",
+    },
+    template="plotly_dark",
+)
+
+fig.update_layout(
+    yaxis_range=[0, 100],
+    showlegend=False,
+    xaxis_tickangle=-15,
+    paper_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="rgba(0,0,0,0)",
+)
+
+st.plotly_chart(
+    fig,
+    use_container_width=True,
+)
+
+feature_display = feature_experiments_df.copy()
+
+feature_metric_columns = [
+    "Accuracy",
+    "Balanced Accuracy",
+    "Precision",
+    "Recall",
+    "F1 Score",
+    "PR-AUC",
+]
+
+for metric in feature_metric_columns:
+    feature_display[metric] = (
+        feature_display[metric] * 100
+    ).round(2)
+
+feature_display = feature_display.rename(
+    columns={
+        "Accuracy": "Accuracy (%)",
+        "Balanced Accuracy": "Balanced Accuracy (%)",
+        "Precision": "Precision (%)",
+        "Recall": "Recall (%)",
+        "F1 Score": "F1 Score (%)",
+        "PR-AUC": "PR-AUC (%)",
+    }
+)
+
+with st.expander("View complete feature experiment results"):
+    st.dataframe(
+        feature_display,
+        use_container_width=True,
+        hide_index=True,
+    )
+
+st.markdown("#### Feature approaches explored")
+
+approach_col1, approach_col2 = st.columns(2)
+
+with approach_col1:
+    st.markdown(
+        """
+        **TF-IDF**
+
+        Represents code diff text using word and phrase
+        importance scores.
+
+        **Word2Vec**
+
+        Learns vector representations of code tokens
+        based on their surrounding context.
+        """
+    )
+
+with approach_col2:
+    st.markdown(
+        """
+        **Security sensitive API indicators**
+
+        Extracts indicators associated with cryptography,
+        authentication, authorization, SQL protection,
+        and input validation from added code lines.
+
+        **Combined representation**
+
+        Combines TF-IDF, Word2Vec, and API indicators
+        to investigate whether different representations
+        complement each other.
+        """
+    )
+
+
+st.markdown("#### Key research observations")
+
+st.markdown(
+    """
+    - **TF-IDF + API Indicators:** Achieved the highest mean
+      F1 score (77.63%) and accuracy (89.68%) among the
+      four approaches.
+
+    - **TF-IDF Baseline:** Retained the highest mean PR-AUC
+      (86.16%), making it the strongest approach under the
+      PR-AUC selection criterion.
+
+    - **Word2Vec:** Performed below the TF-IDF baseline when
+      used independently.
+
+    - **Combined Representation:** Combining all three
+      approaches did not outperform API indicators alone
+      on F1 score or the TF-IDF baseline on PR-AUC.
+    """
+)
+
+st.info(
+    "These results are exploratory feature engineering experiments. "
+    "The original TF-IDF + Random Oversampling configuration remains "
+    "the selected Gerrit deployment model based on mean PR-AUC. "
+    "The additional experiments are presented for research comparison "
+    "and are not separate deployed prediction models."
+)
 
 st.divider()
 
@@ -357,10 +613,6 @@ section_heading(
     "cross-validation experiment.",
 )
 
-# Pooled out-of-fold evaluation results from the expanded model notebook.
-# Label 0 = Not security-related
-# Label 1 = Security-related
-
 expanded_oof_metrics = {
     "accuracy": 0.8856,
     "balanced_accuracy": 0.8663,
@@ -369,14 +621,6 @@ expanded_oof_metrics = {
     "f1": 0.7626,
     "pr_auc": 0.8570,
 }
-
-# Pooled out-of-fold confusion matrix:
-# TN = 1245, FP = 137, FN = 66, TP = 326
-
-expanded_matrix = [
-    [1245, 137],
-    [66, 326],
-]
 
 matrix = confusion_matrix(
     [0] * (1245 + 137) + [1] * (66 + 326),
@@ -403,7 +647,7 @@ with oof_col2:
         expanded_oof_metrics["f1"] * 100,
         suffix="%",
         decimals=2,
-        note="Security-related class",
+        note="Security related class",
     )
 
 with oof_col3:
@@ -423,12 +667,12 @@ with matrix_col:
         data=go.Heatmap(
             z=matrix,
             x=[
-                "Not security-related",
-                "Security-related",
+                "Not security related",
+                "Security related",
             ],
             y=[
-                "Not security-related",
-                "Security-related",
+                "Not security related",
+                "Security related",
             ],
             colorscale=[
                 [0.0, "#14243a"],
@@ -483,25 +727,25 @@ with explanation_col:
     animated_metric_card(
         "True negatives",
         int(tn),
-        note="Correctly classified as not security-related",
+        note="Correctly classified as not security related",
     )
 
     animated_metric_card(
         "True positives",
         int(tp),
-        note="Correctly classified as security-related",
+        note="Correctly classified as security related",
     )
 
     animated_metric_card(
         "False positives",
         int(fp),
-        note="Not security-related, predicted as security-related",
+        note="Not security related, predicted as security related",
     )
 
     animated_metric_card(
         "False negatives",
         int(fn),
-        note="Security-related, predicted as not security-related",
+        note="Security related, predicted as not security related",
     )
 
 
@@ -513,10 +757,9 @@ st.caption(
 st.info(
     "**How to read this matrix:** Rows represent the actual "
     "dataset labels, while columns represent the model's predictions. "
-    "Label 0 represents not security-related and label 1 represents "
-    "security-related."
+    "Label 0 represents not security related and label 1 represents "
+    "security related."
 )
-
 
 st.divider()
 
@@ -618,12 +861,12 @@ with st.expander("View original Gerrit experiment (historical baseline)"):
         "not security-related revisions."
     )
 
-
 st.divider()
 
 section_heading(
     "Research interpretation",
-    "Summary of the selected models and their respective inputs.",
+    "Summary of the GitHub and Gerrit findings, including "
+    "the additional feature-engineering experiments.",
 )
 
 left, right = st.columns(2)
@@ -639,7 +882,7 @@ with left:
             three evaluated GitHub models.
           </p>
           <p style="color:#94a3b8;font-size:.85rem">
-            Input: review comment text.
+            Input: GitHub pull request review comment text.
           </p>
         </div>
         """,
@@ -663,6 +906,56 @@ with right:
         """,
         unsafe_allow_html=True,
     )
+
+st.markdown("#### Additional feature-engineering findings")
+
+interpretation_col1, interpretation_col2 = st.columns(2)
+
+with interpretation_col1:
+    animated_metric_card(
+        "Highest feature experiment F1",
+        float(best_feature_f1["F1 Score"]) * 100,
+        suffix="%",
+        decimals=2,
+        note="TF-IDF + API Indicators",
+    )
+
+with interpretation_col2:
+    animated_metric_card(
+        "Highest feature experiment PR-AUC",
+        float(best_feature_prauc["PR-AUC"]) * 100,
+        suffix="%",
+        decimals=2,
+        note="TF-IDF Baseline",
+    )
+
+
+st.markdown(
+    """
+    The additional Gerrit experiments investigated whether
+    alternative code representations and security-sensitive
+    API indicators could improve classification performance.
+
+    - API indicators produced the highest mean F1 score and precision.
+    - The original TF-IDF baseline retained the highest mean PR-AUC.
+    - Word2Vec alone performed below the original TF-IDF baseline.
+    - Combining all three approaches did not outperform API indicators
+      alone on F1 or the baseline on PR-AUC.
+
+    These findings show that additional features can improve certain
+    evaluation metrics, but their impact depends on the metric used
+    to assess model performance.
+    """
+)
+
+
+st.info(
+    "**Overall conclusion:** TF-IDF remained the strongest Gerrit "
+    "approach under the mean PR-AUC selection criterion, while adding "
+    "security-sensitive API indicators improved the mean F1 score. "
+    "The original TF-IDF + Random Oversampling configuration therefore "
+    "remains the selected Gerrit deployment model."
+)
 
 
 st.caption(

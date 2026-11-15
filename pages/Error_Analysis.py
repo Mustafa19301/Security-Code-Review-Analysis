@@ -161,14 +161,14 @@ def render_error_inspection(fp, fn, section_name):
         animated_metric_card(
             "False positives",
             fp_count,
-            note="Predicted security-related, label was negative",
+            note="Predicted security related, label was negative",
         )
 
     with metrics[1]:
         animated_metric_card(
             "False negatives",
             fn_count,
-            note="Predicted negative, label was security-related",
+            note="Predicted negative, label was security related",
         )
 
     with metrics[2]:
@@ -180,7 +180,7 @@ def render_error_inspection(fp, fn, section_name):
 
     if total == 0:
         st.info(
-            "No false-positive or false-negative records "
+            "No false positive or false negative records "
             "were found for this experiment."
         )
         return
@@ -270,13 +270,13 @@ def render_error_inspection(fp, fn, section_name):
     with false_tab:
         st.markdown(
             """
-            **Incorrect security-related prediction**
+            **Incorrect security related prediction**
 
-            The model predicts security-related even though the
-            assigned dataset label is not security-related.
+            The model predicts security related even though the
+            assigned dataset label is not security related.
 
             **Potential impact:** Reviewers may spend time investigating
-            changes that are not security-related.
+            changes that are not security related.
 
             **Possible contributors:** security terminology in ordinary
             changes, authentication or permission tests, reliance on
@@ -287,17 +287,17 @@ def render_error_inspection(fp, fn, section_name):
     with missed_tab:
         st.markdown(
             """
-            **Missed security-related prediction**
+            **Missed security related prediction**
 
-            The model predicts not security-related even though the
-            assigned dataset label is security-related.
+            The model predicts not security related even though the
+            assigned dataset label is security related.
 
-            **Potential impact:** A security-related change may not
+            **Potential impact:** A security related change may not
             be flagged for additional review.
 
             **Possible contributors:** unfamiliar security terminology,
             short diffs, missing context, and the limited number of
-            security-related examples available during training.
+            security related examples available during training.
             """
         )
 
@@ -473,7 +473,7 @@ def render_error_inspection(fp, fn, section_name):
 
         else:
             st.info(
-                "No code-diff text was included in this record."
+                "No code diff text was included in this record."
             )
 
 
@@ -494,7 +494,7 @@ expanded_fn = load_csv(
 
 if expanded_fp is None or expanded_fn is None:
     st.error(
-        "The expanded Gerrit false-positive or false-negative "
+        "The expanded Gerrit false positive or false negative "
         "CSV file could not be loaded. Check the expanded Gerrit "
         "paths in app_utils/data_loader.py."
     )
@@ -555,15 +555,15 @@ section_heading(
 
 st.markdown(
     """
-    The expanded Gerrit dataset contains both security-related and
-    non-security-related revisions. Although the expanded dataset
-    provides more security-related examples than the original
+    The expanded Gerrit dataset contains both security related and
+    non security related revisions. Although the expanded dataset
+    provides more security related examples than the original
     experiment, the two classes are still imbalanced.
 
     Text-based models can associate familiar words and programming
     patterns with the positive class even when the full change context
     does not support that interpretation. Conversely, less familiar
-    security-related changes may be missed.
+    security related changes may be missed.
 
     Examining false positives and false negatives helps identify
     patterns that could guide future improvements to the model
