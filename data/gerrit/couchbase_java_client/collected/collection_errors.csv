@@ -1,0 +1,5 @@
+review_number,revision_number,stage,error
+40536,1,git_fetch_or_comparison,fatal: shallow file has changed since we read it
+83035,2,git_fetch_or_comparison,fatal: shallow file has changed since we read it
+83035,3,revision_comparison,Previous revision fetch failed; comparison skipped to preserve continuity.
+83035,4,git_fetch_or_comparison,fatal: shallow file has changed since we read it

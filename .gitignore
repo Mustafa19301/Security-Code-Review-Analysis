@@ -22,3 +22,11 @@ data/processed/unique_comments.csv
 
 # Raw patch-aware dataset
 data/pr_review_traces/*.jsonl
+
+# macOS metadata
+.DS_Store
+
+# Gerrit local repository and pilot backups
+data/gerrit/repos/
+data/gerrit/couchbase_java_client/collected/pilot/
+data/gerrit/couchbase_java_client/collected_pilot_backup/

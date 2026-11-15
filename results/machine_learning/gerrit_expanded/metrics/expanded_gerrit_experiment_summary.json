@@ -1,0 +1,19 @@
+{
+    "dataset": "/Users/mustafaahmed/Documents/Security Code Review Analysis/data/gerrit/couchbase_java_client/processed/gerrit_modeling_intermediate_expansion.csv",
+    "total_revisions": 1774,
+    "unique_reviews": 808,
+    "not_security_related": 1382,
+    "security_related": 392,
+    "best_model": "TF-IDF + Random Oversampling",
+    "best_strategy": "Random oversampling",
+    "cross_validation": "5-fold Stratified Group Cross-Validation",
+    "group_column": "review_number",
+    "pooled_oof_metrics": {
+        "Accuracy": 0.8855693348365277,
+        "Balanced Accuracy": 0.8662504799314805,
+        "Precision": 0.7041036717062635,
+        "Recall": 0.8316326530612245,
+        "F1": 0.7625730994152047,
+        "PR_AUC": 0.8569681189243801
+    }
+}
