@@ -14,8 +14,6 @@ sidebar_brand()
 page_header(
     "SECURITY RESEARCH PLATFORM",
     "CodeReview Sentinel",
-    "An interactive research workspace for exploring code review datasets "
-    "and machine learning approaches to identifying security related changes.",
 )
 
 st.markdown(
@@ -70,7 +68,7 @@ cards = [
     (
         "04",
         "Code Review Analyzer",
-        "Submit a Git diff to receive a security related classification.",
+        "Submit a Git diff to receive a security related classification and identify vulnerability.",
     ),
     (
         "05",
@@ -106,8 +104,7 @@ st.divider()
 
 st.info(
     "Interpret model outputs as screening signals for potentially "
-    "security related changes. They do not independently confirm "
-    "exploitable vulnerabilities."
+    "security related changes."
 )
 
-st.caption("CodeReview Sentinel · University Research Prototype")
+st.caption("CodeReview Sentinel")
