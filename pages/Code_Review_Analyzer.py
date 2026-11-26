@@ -14,20 +14,14 @@ from components.ui import (
     animated_metric_card,
 )
 
-
-st.set_page_config(
-    page_title="Code Review Analyzer | CodeReview Sentinel",
-    layout="wide",
-)
-
 inject_theme()
 sidebar_brand()
 
 page_header(
     "INTERACTIVE MODEL DEMO",
     "Code Review Analyzer",
-    "Submit a Git diff and use the expanded Gerrit classifier to screen "
-    "for patterns associated with security related code changes.",
+    "Explore how the expanded Gerrit classifier screens code changes "
+    "for patterns associated with Security wise modifications.",
 )
 
 
@@ -58,14 +52,14 @@ positive_label = model_bundle.get(
 label_mapping = model_bundle.get(
     "label_mapping",
     {
-        0: "Not security related",
-        1: "Security related",
+        0: "Not security wise",
+        1: "Security wise",
     },
 )
 
 positive_description = model_bundle.get(
     "positive_class_description",
-    "Security related",
+    "Security wise",
 )
 
 model_name = model_bundle.get(
@@ -302,6 +296,101 @@ index 1234567..abcdef0 100644
 }
 
 
+example_descriptions = {
+    "TLS certificate and hostname verification":
+        "Replaces trust-all certificate handling with a trust store and "
+        "secure TLS endpoint verification.",
+
+    "Prevent insecure credential handling":
+        "Improves credential validation and removes password exposure "
+        "from debug logging.",
+
+    "Validate server certificates":
+        "Adds certificate type, validity, and trust checks instead of "
+        "automatically accepting certificates.",
+
+    "SQL injection prevention":
+        "Replaces string concatenation in a database query with "
+        "parameterized query options.",
+
+    "Ordinary refactoring":
+        "Simplifies a connection utility method without introducing "
+        "an obvious security-focused change.",
+}
+
+
+def is_valid_git_diff(text):
+    """
+    Validate recognizable unified Git diff structure.
+
+    Requires:
+    - A Git diff header or unified file headers.
+    - At least one hunk header.
+    - At least one actual added or removed line inside a hunk.
+
+    This checks input format only. It does not assess security.
+    """
+
+    if not text or not text.strip():
+        return False
+
+    lines = text.splitlines()
+
+    has_git_header = any(
+        line.startswith("diff --git ")
+        for line in lines
+    )
+
+    has_old_file_header = any(
+        line.startswith("--- ")
+        for line in lines
+    )
+
+    has_new_file_header = any(
+        line.startswith("+++ ")
+        for line in lines
+    )
+
+    has_unified_file_headers = (
+        has_old_file_header and has_new_file_header
+    )
+
+    has_hunk = False
+    has_actual_change = False
+
+    for line in lines:
+
+        if re.match(r"^@@\s.*@@", line):
+            has_hunk = True
+            continue
+
+        if not has_hunk:
+            continue
+
+        if line.startswith("diff --git "):
+            has_hunk = False
+            continue
+
+        if (
+            line.startswith("+")
+            and not line.startswith("+++")
+        ) or (
+            line.startswith("-")
+            and not line.startswith("---")
+        ):
+            has_actual_change = True
+
+    return (
+        (has_git_header or has_unified_file_headers)
+        and re.search(
+            r"^@@\s.*@@",
+            text,
+            re.MULTILINE,
+        ) is not None
+        and has_actual_change
+    )
+
+
 LOW_INFORMATION_TERMS = {
     "example",
     "src",
@@ -352,9 +441,6 @@ def filter_explanation_terms(contribution_df):
 
     This function does not modify the model input,
     predictions, TF-IDF features, or model coefficients.
-
-    Multi-word terms are retained if they contain at least
-    one potentially meaningful token.
     """
 
     if contribution_df is None or contribution_df.empty:
@@ -393,7 +479,7 @@ def get_feature_contributions(
     Calculate per-feature TF-IDF contributions using the
     fitted binary Logistic Regression coefficients.
 
-    Positive contributions support the security related class.
+    Positive contributions support the Security wise class.
     Negative contributions push the prediction away from it.
 
     These are model feature contributions, not proof of
@@ -418,9 +504,6 @@ def get_feature_contributions(
 
     coefficients = model.coef_[0]
 
-    # For binary Logistic Regression, coef_ is oriented toward
-    # classes_[1]. Reverse the direction if the positive class
-    # is classes_[0].
     if positive_index == 0:
         coefficients = -coefficients
 
@@ -457,7 +540,7 @@ def display_feature_explanations(contribution_df):
     section_heading(
         "What influenced this prediction?",
         "Explore the text features that pushed the model toward "
-        "or away from a security related classification.",
+        "or away from a Security wise classification.",
     )
 
     if contribution_df is None or contribution_df.empty:
@@ -490,7 +573,7 @@ def display_feature_explanations(contribution_df):
         positive_col, negative_col = st.columns(2)
 
         with positive_col:
-            st.markdown("#### Supporting security related")
+            st.markdown("#### Supporting Security wise")
 
             if positive_terms.empty:
                 st.caption(
@@ -532,7 +615,7 @@ def display_feature_explanations(contribution_df):
                 )
 
         with negative_col:
-            st.markdown("#### Pushing against security related")
+            st.markdown("#### Pushing against Security wise")
 
             if negative_terms.empty:
                 st.caption(
@@ -632,7 +715,7 @@ def display_feature_explanations(contribution_df):
 
     st.caption(
         "Interpretation: positive contributions move the model's "
-        "decision toward the security related class. Negative "
+        "decision toward the Security wise class. Negative "
         "contributions move it away. These values explain the "
         "model's text based decision; they do not establish that "
         "a software vulnerability exists."
@@ -700,34 +783,74 @@ with st.expander("View expanded Gerrit model evaluation"):
     )
 
 
+
 section_heading(
-    "Prepare an input",
-    "Use a prepared example or paste a unified Git diff from your own project.",
+    "Try CodeReview Sentinel",
+    "You can explore the prepared examples without having Git installed "
+    "or knowing how to create a Git diff.",
 )
 
+st.markdown(
+    """
+    **New to Git diffs? No problem.**
+
+    A Git diff is simply a view of the differences between two versions
+    of a file. It shows which lines of code were added, removed, or changed.
+
+    CodeReview Sentinel analyzes those changes and looks for patterns
+    learned from its training data. Choose one of the sample changes below
+    to try the analyzer, or paste a diff from your own project.
+    """
+)
+
+st.markdown("#### Try a sample code change")
+
 example_choice = st.selectbox(
-    "Load a demo example",
+    "Choose a sample",
     ["Choose an example..."] + list(examples.keys()),
 )
 
-if st.button("Load selected example"):
-    if example_choice == "Choose an example...":
-        st.warning("Select an example first.")
+if example_choice != "Choose an example...":
+    st.caption(
+        example_descriptions[example_choice]
+    )
 
-    else:
-        st.session_state["code_diff_input"] = examples[
-            example_choice
-        ]
+load_col, info_col = st.columns([1, 2])
 
-        st.session_state.pop("last_analysis", None)
-        st.rerun()
+with load_col:
+    if st.button(
+        "Load sample code change",
+        type="primary",
+        use_container_width=True,
+    ):
+        if example_choice == "Choose an example...":
+            st.warning("Please choose a sample first.")
 
+        else:
+            st.session_state["code_diff_input"] = examples[
+                example_choice
+            ]
+
+            st.session_state.pop("last_analysis", None)
+            st.rerun()
+
+with info_col:
+    st.caption(
+        "Loading a sample fills the Git diff input below. "
+        "You can review or edit it before running the analysis."
+    )
+
+
+# Git diff input is now directly below the sample selector.
 
 code_diff = st.text_area(
-    "Code diff",
+    "Git diff input",
     key="code_diff_input",
     height=330,
-    placeholder="Paste a Git diff here...",
+    placeholder=(
+        "Paste a unified Git diff here, or load one of the sample "
+        "code changes above..."
+    ),
 )
 
 
@@ -735,7 +858,7 @@ button_col, clear_col = st.columns(2)
 
 with button_col:
     analyze_button = st.button(
-        "Analyze code diff",
+        "Analyze code change",
         type="primary",
         use_container_width=True,
     )
@@ -748,16 +871,50 @@ with clear_col:
     )
 
 
+with st.expander("How do I get a Git diff?"):
+    st.markdown(
+        """
+        If you have a Git repository, open a terminal in your project
+        directory and run:
+
+        ```bash
+        git diff
+        ```
+
+        To compare your most recent commit with the previous one, run:
+
+        ```bash
+        git diff HEAD~1 HEAD
+        ```
+
+        Copy the resulting output and paste it into the input above.
+
+        **You do not need to remove the Git headers or change the formatting.**
+        """
+    )
+
 if analyze_button:
+
+    st.session_state.pop("last_analysis", None)
 
     if not code_diff.strip():
         st.warning(
-            "Please enter a code diff before analyzing."
+            "Please load a sample code change or paste a Git diff "
+            "before analyzing."
+        )
+
+    elif not is_valid_git_diff(code_diff):
+        st.warning(
+            "This input does not appear to be a valid unified Git diff. "
+            "Please paste a Git diff containing file headers and at least "
+            "one change hunk. You can also select one of the prepared "
+            "examples above. Ordinary sentences and plain code cannot "
+            "be analyzed."
         )
 
     else:
         with st.spinner(
-            "Vectorizing the diff and evaluating the expanded classifier..."
+            "Analyzing the code change with the expanded Gerrit classifier..."
         ):
             try:
                 features = vectorizer.transform(
@@ -813,24 +970,24 @@ if result:
     prediction = result["prediction"]
     score = result["score"]
 
-    is_security_related = (
+    is_security_wise = (
         prediction == positive_label
     )
 
-    if is_security_related:
-        st.error("Potentially security related change")
+    if is_security_wise:
+        st.error("Potentially Security wise change")
 
         explanation = (
             "The model identified text patterns associated with "
-            "security related code changes."
+            "Security wise code changes."
         )
 
     else:
-        st.success("Not classified as security related")
+        st.success("Not classified as Security wise")
 
         explanation = (
             "The model did not identify enough learned patterns "
-            "to classify this change as security related."
+            "to classify this change as Security wise."
         )
 
     st.write(explanation)
@@ -839,28 +996,18 @@ if result:
 
     with score_col:
         animated_metric_card(
-            "Security related model score",
+            "Security wise model score",
             score * 100,
             suffix="%",
             decimals=2,
-            note="Model-estimated score for the security related class",
+            note="Model-estimated score for the Security wise class",
         )
 
     with class_col:
         class_value = (
-            label_mapping.get(
-                positive_label,
-                positive_description,
-            )
-            if is_security_related
-            else label_mapping.get(
-                next(
-                    label
-                    for label in model.classes_
-                    if label != positive_label
-                ),
-                "Not security related",
-            )
+            "Security wise"
+            if is_security_wise
+            else "Not security wise"
         )
 
         st.markdown(
@@ -884,7 +1031,7 @@ if result:
 
     st.caption(
         "This is the Logistic Regression model's estimated score "
-        "for the security related class. It is not a calibrated "
+        "for the Security wise class. It is not a calibrated "
         "measure of vulnerability likelihood or severity, nor "
         "proof that an exploitable vulnerability exists."
     )
@@ -904,14 +1051,14 @@ if result:
     with st.expander("How to interpret this prediction"):
         st.markdown(
             """
-            - **Security related:** the model found patterns resembling
-              examples labelled security related during training.
-            - **Not security related:** the model did not find enough
+            - **Security wise:** the model found patterns resembling
+              examples labelled Security wise during training.
+            - **Not security wise:** the model did not find enough
               learned patterns to cross its classification threshold.
             - **Model score:** the estimated score assigned to the
-              security related class by Logistic Regression.
+              Security wise class by Logistic Regression.
             - **Feature contributions:** terms that pushed the model's
-              classification toward or away from the security related class.
+              classification toward or away from the Security wise class.
             - **Explanation filtering:** generic file path and programming
               terms may be hidden from the charts, but they remain part
               of the model's original prediction.
@@ -937,10 +1084,10 @@ with st.expander("About this analyzer and its limitations"):
 
         **Input:** Git code diffs
 
-        **Prediction target:** Security related versus
-        not security related code changes.
+        **Prediction target:** Security wise versus
+        not Security wise code changes.
 
-        **Positive class:** Security related (label 1).
+        **Positive class:** Security wise (label 1).
 
         **Evaluation:** Five-fold Stratified Group Cross-Validation,
         grouping revisions by review number.
@@ -958,7 +1105,7 @@ with st.expander("About this analyzer and its limitations"):
         remains available.
 
         The model score is not a calibrated probability of a
-        vulnerability. A security related prediction does not
+        vulnerability. A Security wise prediction does not
         independently confirm that an exploitable vulnerability
         exists.
         """

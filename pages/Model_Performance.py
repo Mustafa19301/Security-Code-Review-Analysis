@@ -15,12 +15,6 @@ from components.ui import (
     animated_metric_card,
 )
 
-
-st.set_page_config(
-    page_title="Model Performance | CodeReview Sentinel",
-    layout="wide",
-)
-
 inject_theme()
 sidebar_brand()
 

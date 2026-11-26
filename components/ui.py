@@ -2,6 +2,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 import html
 import json
+from pathlib import Path
 
 
 def inject_theme():
@@ -257,15 +258,30 @@ def inject_theme():
 
 def sidebar_brand():
     with st.sidebar:
+
+        logo_path = (
+            Path(__file__).resolve().parent.parent
+            / "assets"
+            / "Uwindsor Horizontal.png"
+        )
+
+        if logo_path.exists():
+            st.image(
+                str(logo_path),
+                width=225,
+            )
+
+            st.write("")
+
         st.markdown(
             """
             <div style="padding:.4rem 0 .8rem">
-              <div style="font-size:1.5rem;font-weight:800;
+              <div style="font-size:1.5rem;font-weight:1000;
                           font-family:'Space Grotesk',sans-serif">
                 CodeReview
               </div>
               <div style="font-size:.75rem;letter-spacing:.22em;
-                          color:#60a5fa;font-weight:800">
+                          color:#60a5fa;font-weight:1000">
                 SENTINEL
               </div>
               <div style="font-size:.78rem;color:#94a3b8;margin-top:.5rem">
@@ -275,14 +291,6 @@ def sidebar_brand():
             """,
             unsafe_allow_html=True,
         )
-
-        st.divider()
-        st.caption("RESEARCH WORKSPACE")
-        st.caption(
-            "Use the page navigation above to explore datasets, "
-            "model results, predictions, and errors."
-        )
-        st.divider()
         st.caption("University Research Prototype")
         st.caption("GitHub + Gerrit")
 
