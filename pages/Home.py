@@ -1,11 +1,10 @@
 import streamlit as st
 
-from components.ui import inject_theme, sidebar_brand, page_header, metric_card
-
-st.set_page_config(
-    page_title="CodeReview Sentinel",
-    layout="wide",
-    initial_sidebar_state="expanded",
+from components.ui import (
+    inject_theme,
+    sidebar_brand,
+    page_header,
+    metric_card,
 )
 
 inject_theme()
@@ -14,6 +13,8 @@ sidebar_brand()
 page_header(
     "SECURITY RESEARCH PLATFORM",
     "CodeReview Sentinel",
+    "Explore our research into identifying security wise code reviews "
+    "and potentially vulnerability code changes using machine learning.",
 )
 
 st.markdown(
@@ -22,6 +23,7 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
 st.write("")
 
 section_col1, section_col2, section_col3 = st.columns(3)
@@ -30,7 +32,7 @@ with section_col1:
     metric_card("Research sources", "02", "GitHub and Gerrit")
 
 with section_col2:
-    metric_card("Analysis approach", "Supervised ML", "Text-based classification")
+    metric_card("Analysis approach", "Supervised ML", "Text based classification")
 
 with section_col3:
     metric_card(
@@ -44,7 +46,7 @@ st.markdown("## Explore the workspace")
 
 st.markdown(
     '<div class="cr-section-note">'
-    'Choose a research area from the sidebar navigation.'
+    'Follow the research workflow using the navigation menu.'
     '</div>',
     unsafe_allow_html=True,
 )
@@ -68,7 +70,8 @@ cards = [
     (
         "04",
         "Code Review Analyzer",
-        "Submit a Git diff to receive a security related classification and identify vulnerability.",
+        "Submit a Git diff to receive a security wise classification "
+        "and identify potentially vulnerability changes.",
     ),
     (
         "05",
@@ -104,7 +107,7 @@ st.divider()
 
 st.info(
     "Interpret model outputs as screening signals for potentially "
-    "security related changes."
+    "security-related changes."
 )
 
 st.caption("CodeReview Sentinel")
