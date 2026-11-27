@@ -1,4 +1,3 @@
-
 from pathlib import Path
 
 import joblib
@@ -10,7 +9,6 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
 DATA_FILES = {
-
     "github_final": (
         "data/processed/final_security.csv"
     ),
@@ -24,7 +22,6 @@ DATA_FILES = {
         "data/processed/interpretation_outputs/"
         "final_model_summary.csv"
     ),
-
 
     "gerrit_final": (
         "data/gerrit/couchbase_java_client/processed/"
@@ -56,9 +53,10 @@ DATA_FILES = {
         "gerrit_false_negatives.csv"
     ),
 
+    # Final Gerrit dataset used by the Dataset Explorer.
     "gerrit_expanded_final": (
         "data/gerrit/couchbase_java_client/processed/"
-        "finalized_gerrit_intermediate_expansion.csv"
+        "finalized_gerrit_expanded_binary.csv"
     ),
 
     "gerrit_expanded_modeling": (
@@ -113,7 +111,6 @@ DATA_FILES = {
 
 
 MODEL_FILES = {
-
     "gerrit_code_diff": (
         "results/machine_learning/models/"
         "gerrit_tfidf_logistic_regression.joblib"
@@ -155,6 +152,26 @@ def get_data_path(file_key):
 
 
 @st.cache_data(show_spinner="Loading research data...")
+def _load_csv_from_path(path_string, modified_time_ns):
+    """
+    Load and cache a CSV using its actual file path.
+
+    Including the path and modification timestamp in the cache
+    arguments ensures that changing a dataset mapping or updating
+    the underlying CSV does not keep returning an old cached file.
+    """
+
+    path = Path(path_string)
+
+    if not path.exists():
+        return None
+
+    return pd.read_csv(
+        path,
+        low_memory=False,
+    )
+
+
 def load_csv(file_key):
     """
     Load and cache a research CSV dataset.
@@ -175,9 +192,9 @@ def load_csv(file_key):
     if not path.exists():
         return None
 
-    return pd.read_csv(
-        path,
-        low_memory=False,
+    return _load_csv_from_path(
+        str(path),
+        path.stat().st_mtime_ns,
     )
 
 

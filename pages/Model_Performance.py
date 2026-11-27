@@ -21,9 +21,7 @@ sidebar_brand()
 page_header(
     "MODEL EVALUATION",
     "Model Performance",
-    "Compare the saved GitHub and Gerrit evaluation results. "
-    "The expanded Gerrit experiment is now the primary Gerrit "
-    "evaluation, while the original experiment is retained as a baseline.",
+    "Comparing the saved GitHub and Gerrit evaluation results.",
 )
 
 github_df = load_csv("github_model_comparison")
@@ -34,7 +32,7 @@ if github_df is None:
 
 section_heading(
     "GitHub model evaluation",
-    "Results from the GitHub review-comment classification experiment.",
+    "Results from the GitHub review comment classification experiment.",
 )
 
 github_metrics = [
@@ -174,7 +172,7 @@ st.divider()
 
 section_heading(
     "Gerrit model evaluation",
-    "Mean results across five Stratified Group K-Fold cross-validation folds.",
+    "Mean results across five Stratified Group K-Fold cross validation folds.",
 )
 
 expanded_gerrit_df = pd.DataFrame([
@@ -275,7 +273,7 @@ fig = px.bar(
     color="Metric",
     barmode="group",
     text_auto=".1f",
-    title="Expanded Gerrit: mean cross-validation metrics",
+    title="Expanded Gerrit: mean cross validation metrics",
     labels={
         "Model": "Model configuration",
         "Score": "Mean score (%)",
@@ -349,8 +347,8 @@ section_heading(
 st.markdown(
     """
     These experiments investigated whether incorporating additional
-    code-level features could improve the classification of
-    security-related Gerrit code changes.
+    code level features could improve the classification of
+    security related Gerrit code changes.
 
     Four approaches were evaluated using the same expanded Gerrit
     dataset and five-fold Stratified Group K-Fold cross-validation.
@@ -851,8 +849,8 @@ with st.expander("View original Gerrit experiment (historical baseline)"):
 
     st.caption(
         "Original Gerrit experiment: 1,774 revisions were used "
-        "for modelling, with 71 security-related and 1,703 "
-        "not security-related revisions."
+        "for modelling, with 71 security related and 1,703 "
+        "not security related revisions."
     )
 
 st.divider()
@@ -951,15 +949,8 @@ st.info(
     "remains the selected Gerrit deployment model."
 )
 
-
-st.caption(
-    "GitHub and Gerrit scores are not directly comparable. "
-    "They use different datasets, input types, and evaluation setups."
-)
-
 st.info(
     "**Research scope:** The models classify review comments and "
-    "code changes according to the security-related labels in their "
-    "respective datasets. A security-related classification is not "
-    "confirmation that an exploitable vulnerability exists."
+    "code changes according to the security related labels in their "
+    "respective datasets."
 )
