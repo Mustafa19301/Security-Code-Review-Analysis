@@ -268,7 +268,7 @@ def sidebar_brand():
         if logo_path.exists():
             st.image(
                 str(logo_path),
-                width=225,
+                width=275,
             )
 
             st.write("")

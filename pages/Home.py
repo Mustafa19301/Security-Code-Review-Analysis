@@ -46,7 +46,7 @@ st.markdown("## Explore the workspace")
 
 st.markdown(
     '<div class="cr-section-note">'
-    'Follow the research workflow using the navigation menu.'
+    'Research workflow modules'
     '</div>',
     unsafe_allow_html=True,
 )
@@ -55,7 +55,7 @@ cards = [
     (
         "01",
         "Research Overview",
-        "Research objectives, data sources, collection pipeline, and methodology.",
+        "Research objectives, data sources, collection pipeline and methodology.",
     ),
     (
         "02",
@@ -76,7 +76,7 @@ cards = [
     (
         "05",
         "Error Analysis",
-        "Inspect false positives, false negatives, and model limitations.",
+        "Inspect false positives, false negatives and model limitations.",
     ),
 ]
 
@@ -107,7 +107,7 @@ st.divider()
 
 st.info(
     "Interpret model outputs as screening signals for potentially "
-    "security-related changes."
+    "security wise changes."
 )
 
 st.caption("CodeReview Sentinel")

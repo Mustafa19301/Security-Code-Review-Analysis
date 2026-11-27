@@ -5,7 +5,6 @@ import plotly.express as px
 import streamlit as st
 
 from app_utils.data_loader import (
-    DATA_FILES,
     get_file_information,
     load_csv,
 )
@@ -24,11 +23,10 @@ sidebar_brand()
 page_header(
     "DATA INSPECTION",
     "Dataset Explorer",
-    "Explore finalized GitHub and Gerrit datasets used in the research. "
+    "Finalized GitHub and Gerrit datasets used in the research. "
     "Inspect record counts, missing values, duplicate rows, columns, "
-    "class distributions, and sample records.",
+    "class distributions and sample records.",
 )
-
 
 API_INDICATOR_PATTERNS = {
     "Cryptography": (
@@ -64,6 +62,36 @@ API_INDICATOR_PATTERNS = {
 }
 
 
+DISPLAY_COLUMN_NAMES = {
+    "expanded_security_label": "final_security_label",
+}
+
+
+def prepare_display_dataframe(dataframe):
+    """
+    Prepare a presentation copy of the dataset.
+
+    The original dataframe and CSV are not modified.
+    """
+
+    display_dataframe = dataframe.rename(
+        columns=DISPLAY_COLUMN_NAMES
+    ).copy()
+
+    if "label_source" in display_dataframe.columns:
+        display_dataframe["label_source"] = (
+            display_dataframe["label_source"]
+            .astype("string")
+            .str.replace(
+                r"(?i)expanded keyword-based candidate label",
+                "Keyword-based candidate label",
+                regex=True,
+            )
+        )
+
+    return display_dataframe
+
+
 def extract_added_lines(code_diff):
     """
     Extract added lines from a unified code diff.
@@ -77,6 +105,7 @@ def extract_added_lines(code_diff):
     added_lines = []
 
     for line in str(code_diff).splitlines():
+
         if line.startswith("+++") or line.startswith("---"):
             continue
 
@@ -90,12 +119,6 @@ def calculate_api_indicator_statistics(dataframe):
     """
     Calculate security sensitive API indicator statistics
     from added lines in code diffs.
-
-    Returns
-    -------
-    pandas.DataFrame
-        Total occurrences and number of revisions containing
-        each API indicator category.
     """
 
     if "code_diff" not in dataframe.columns:
@@ -119,7 +142,6 @@ def calculate_api_indicator_statistics(dataframe):
             )
 
             occurrence_count = len(matches)
-
             total_occurrences += occurrence_count
 
             if occurrence_count > 0:
@@ -135,9 +157,210 @@ def calculate_api_indicator_statistics(dataframe):
 
     return pd.DataFrame(results)
 
+def build_security_distribution(
+    dataframe,
+    label_column,
+    label_names,
+):
+    """
+    Build a consistent security label distribution.
+
+    Missing labels are displayed separately and are not included
+    in the labelled record percentage denominator.
+    """
+
+    if label_column not in dataframe.columns:
+        return None
+
+    raw_counts = dataframe[label_column].value_counts(
+        dropna=False
+    )
+
+    results = []
+
+    for raw_label, count in raw_counts.items():
+
+        if pd.isna(raw_label):
+            category = "Missing"
+
+        else:
+            normalized_label = raw_label
+
+            try:
+                numeric_label = float(raw_label)
+
+                if numeric_label.is_integer():
+                    normalized_label = int(numeric_label)
+
+            except (ValueError, TypeError):
+                pass
+
+            category = label_names.get(
+                normalized_label,
+                f"Other / unrecognized ({raw_label})",
+            )
+
+        results.append(
+            {
+                "Label": raw_label,
+                "Category": category,
+                "Records": int(count),
+            }
+        )
+
+    distribution_df = pd.DataFrame(results)
+
+    total_labelled = int(
+        dataframe[label_column].notna().sum()
+    )
+
+    if total_labelled > 0:
+
+        distribution_df["Percentage"] = (
+            distribution_df.apply(
+                lambda row: (
+                    row["Records"] / total_labelled * 100
+                    if row["Category"] != "Missing"
+                    else 0
+                ),
+                axis=1,
+            )
+        )
+
+    else:
+        distribution_df["Percentage"] = 0.0
+
+    return distribution_df
+
+
+def display_security_distribution(
+    dataframe,
+    label_column,
+    label_names,
+    chart_title,
+    section_title,
+    section_description,
+    metric_definitions,
+):
+    """
+    Display a security distribution chart and summary metrics.
+    """
+
+    if label_column not in dataframe.columns:
+
+        st.info(
+            "The selected dataset does not contain the expected "
+            "security classification field."
+        )
+
+        return
+
+    distribution_df = build_security_distribution(
+        dataframe,
+        label_column,
+        label_names,
+    )
+
+    if distribution_df is None or distribution_df.empty:
+
+        st.info(
+            "No security label information is available."
+        )
+
+        return
+
+    section_heading(
+        section_title,
+        section_description,
+    )
+
+    distribution_col, summary_col = st.columns([1.4, 1])
+
+    with distribution_col:
+
+        fig = px.bar(
+            distribution_df,
+            x="Category",
+            y="Records",
+            color="Category",
+            text="Records",
+            title=chart_title,
+            template="plotly_dark",
+        )
+
+        fig.update_layout(
+            showlegend=False,
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            xaxis_title="Security classification",
+            yaxis_title="Number of records",
+        )
+
+        st.plotly_chart(
+            fig,
+            width="stretch",
+        )
+
+    with summary_col:
+
+        valid_labels = dataframe[label_column].dropna()
+        total_labelled = len(valid_labels)
+
+        for label_value, metric_name in metric_definitions:
+
+            count = int(
+                (valid_labels == label_value).sum()
+            )
+
+            percentage = (
+                count / total_labelled * 100
+                if total_labelled > 0
+                else 0
+            )
+
+            st.metric(
+                metric_name,
+                f"{count:,}",
+                f"{percentage:.1f}% of labelled records",
+            )
+
+        st.caption(
+            f"Total labelled records: {total_labelled:,}"
+        )
+
+        missing_count = int(
+            dataframe[label_column].isna().sum()
+        )
+
+        if missing_count > 0:
+
+            st.caption(
+                f"Records with missing labels: {missing_count:,}"
+            )
+
+    st.markdown("**Security distribution breakdown**")
+
+    display_distribution = distribution_df.copy()
+
+    display_distribution["Percentage"] = (
+        display_distribution["Percentage"].map(
+            lambda value: f"{value:.2f}%"
+        )
+    )
+
+    display_distribution = display_distribution[
+        ["Category", "Records", "Percentage"]
+    ]
+
+    st.dataframe(
+        display_distribution,
+        width="stretch",
+        hide_index=True,
+    )
+
 dataset_options = {
     "GitHub — Finalized Dataset": "github_final",
-    "Gerrit — Finalized Expanded Dataset": "gerrit_expanded_final",
+    "Gerrit — Finalized Dataset": "gerrit_expanded_final",
     "Gerrit — Original Dataset": "gerrit_final",
     "Gerrit — Structured Features": "gerrit_features",
 }
@@ -145,6 +368,7 @@ dataset_options = {
 choice_col, info_col = st.columns([1.2, 2])
 
 with choice_col:
+
     dataset_choice = st.selectbox(
         "Select dataset",
         list(dataset_options.keys()),
@@ -154,22 +378,34 @@ file_key = dataset_options[dataset_choice]
 file_info = get_file_information(file_key)
 
 if not file_info["exists"]:
-    st.error("The selected dataset file could not be found.")
-    st.code(DATA_FILES[file_key])
+
+    st.error(
+        "The selected dataset file could not be found. "
+        "Please check the dataset configuration."
+    )
+
     st.stop()
 
+
 with st.spinner("Loading selected research dataset..."):
+
     df = load_csv(file_key)
 
 if df is None:
-    st.error("Unable to load the selected dataset.")
+
+    st.error(
+        "Unable to load the selected dataset."
+    )
+
     st.stop()
 
+display_df = prepare_display_dataframe(df)
 
 excluded_missing_columns = [
     "label_evidence_categories",
     "matched_strong",
     "matched_weak",
+    "matched_security_categories",
 ]
 
 missing_report_df = df.drop(
@@ -194,7 +430,7 @@ st.markdown(
 )
 
 st.caption(
-    f"`{file_info['path']}` · {file_info['size_mb']} MB"
+    f"Dataset size: {file_info['size_mb']} MB"
 )
 
 metric_cols = st.columns(4)
@@ -206,8 +442,13 @@ dataset_metrics = [
     ("Duplicate rows", duplicate_count, "Fully duplicated records"),
 ]
 
-for col, (label, value, note) in zip(metric_cols, dataset_metrics):
+for col, (label, value, note) in zip(
+    metric_cols,
+    dataset_metrics,
+):
+
     with col:
+
         animated_metric_card(
             label,
             value,
@@ -251,7 +492,7 @@ with profile_left:
 
     st.plotly_chart(
         fig,
-        use_container_width=True,
+        width="stretch",
     )
 
 
@@ -283,6 +524,12 @@ with profile_right:
 
     else:
 
+        missing_data["Column"] = (
+            missing_data["Column"].replace(
+                DISPLAY_COLUMN_NAMES
+            )
+        )
+
         fig = px.bar(
             missing_data.head(15),
             x="Missing Values",
@@ -301,103 +548,156 @@ with profile_right:
 
         st.plotly_chart(
             fig,
-            use_container_width=True,
+            width="stretch",
         )
 
 st.write("")
 
-if (
-    file_key == "gerrit_expanded_final"
-    and "security_label_binary" in df.columns
-):
+if file_key == "github_final":
 
-    section_heading(
-        "Gerrit security label distribution",
-        "Distribution of security related and non security related revisions.",
+    github_label_names = {
+        0: "Not security related",
+        1: "Security related",
+        2: "Uncertain",
+    }
+
+    display_security_distribution(
+        dataframe=df,
+        label_column="security_label",
+        label_names=github_label_names,
+        chart_title="GitHub security classification distribution",
+        section_title="GitHub security label distribution",
+        section_description=(
+            "Distribution of security related, non security related, "
+            "and uncertain GitHub records."
+        ),
+        metric_definitions=[
+            (1, "Security related"),
+            (0, "Not security related"),
+            (2, "Uncertain"),
+        ],
     )
 
-    label_counts = (
-        df["security_label_binary"]
-        .value_counts(dropna=False)
-        .rename_axis("Label")
-        .reset_index(name="Records")
-    )
 
-    label_names = {
+elif file_key == "gerrit_expanded_final":
+
+    gerrit_label_names = {
         0: "Not security related",
         1: "Security related",
     }
 
-    label_counts["Category"] = (
-        label_counts["Label"]
-        .map(label_names)
-        .fillna("Other / missing")
+    display_security_distribution(
+        dataframe=df,
+        label_column="expanded_security_label",
+        label_names=gerrit_label_names,
+        chart_title="Gerrit security classification distribution",
+        section_title="Gerrit security label distribution",
+        section_description=(
+            "Distribution of security related and "
+            "non security related Gerrit revisions."
+        ),
+        metric_definitions=[
+            (1, "Security related"),
+            (0, "Not security related"),
+        ],
     )
 
-    label_counts["Category"] = (
-        label_counts["Category"].astype(str)
-    )
+if file_key in (
+    "github_final",
+    "gerrit_expanded_final",
+):
 
-    distribution_col, summary_col = st.columns([1.4, 1])
+    with st.expander(
+        "How is the security distribution determined?"
+    ):
 
-    with distribution_col:
+        if file_key == "github_final":
 
-        fig = px.bar(
-            label_counts,
-            x="Category",
-            y="Records",
-            color="Category",
-            text="Records",
-            title="Gerrit classification labels",
-            template="plotly_dark",
-        )
+            st.markdown(
+                """
+                ### GitHub: Three class annotation scheme
 
-        fig.update_layout(
-            showlegend=False,
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-        )
+                The finalized GitHub dataset uses three labels to
+                distinguish security-related changes from changes
+                that do not have identifiable security relevance
+                and cases where the available evidence is insufficient.
 
-        st.plotly_chart(
-            fig,
-            use_container_width=True,
-        )
+                | Label | Classification | Interpretation |
+                |---|---|---|
+                | 0 | Not security related | No identifiable security relevance in the available change context. |
+                | 1 | Security related | Evidence indicates a security focused change or an attempt to address a vulnerability. |
+                | 2 | Uncertain | Available information is insufficient to confidently assign either binary classification. |
 
-    with summary_col:
+                ### How the classification is interpreted
 
-        valid_labels = (
-            df["security_label_binary"].dropna()
-        )
+                Security relevance should be assessed using the available
+                change context, including commit or pull request
+                descriptions and the associated code changes.
 
-        positive_count = int(
-            (valid_labels == 1).sum()
-        )
+                Examples of potentially relevant evidence include:
 
-        negative_count = int(
-            (valid_labels == 0).sum()
-        )
+                - Authentication and authorization changes.
+                - Credential and password handling.
+                - Cryptographic operations and secure communication.
+                - Input validation and sanitization.
+                - SQL injection prevention and other security-focused fixes.
 
-        total_labelled = (
-            positive_count + negative_count
-        )
-
-        if total_labelled > 0:
-
-            st.metric(
-                "Security related",
-                f"{positive_count:,}",
-                f"{positive_count / total_labelled * 100:.1f}% of labelled records",
+                **Keywords are candidate signals, not proof of security
+                relevance.** A keyword appearing in a description or
+                code change does not automatically make that record
+                security related nor a vulnerability present.
+                """
             )
 
-            st.metric(
-                "Not security related",
-                f"{negative_count:,}",
-                f"{negative_count / total_labelled * 100:.1f}% of labelled records",
+        else:
+
+            st.markdown(
+                """
+                ### Gerrit: Binary classification scheme
+
+                The finalized Gerrit dataset uses two classes to
+                represent whether a revision is security related.
+
+                | Label | Classification | Interpretation |
+                |---|---|---|
+                | 0 | Not security related | The revision is assigned to the non security related class. |
+                | 1 | Security related | The revision is assigned to the security related class. |
+
+                ### How the labels were determined
+
+                The finalized Gerrit dataset contains 2,635 revisions.
+
+                ### Security related indicators
+
+                The candidate review considered indicators associated
+                with areas such as:
+
+                - Secrets and sensitive data.
+                - Authorization and access control.
+                - Authentication.
+                - Secure communication.
+                - Injection and input validation.
+                - Cryptography.
+
+                These indicators were used to identify potentially
+                relevant revisions. A keyword match alone does not
+                independently prove that a revision fixes a
+                vulnerability or introduces a security improvement.
+
+                ### Understanding the distribution
+
+                The chart counts the final binary classifications
+                across all 2,635 records.
+
+                Percentages are calculated using the number of
+                records with non missing final security labels.
+                """
             )
 
-        st.caption(
-            "Binary labels: 0 = Not security related; "
-            "1 = Security related."
+        st.info(
+            "The Dataset Explorer reports the labels already stored "
+            "in the selected finalized dataset. It does not generate, "
+            "change, or independently verify security labels."
         )
 
 st.write("")
@@ -510,7 +810,7 @@ if file_key == "gerrit_expanded_final":
 
             st.plotly_chart(
                 fig,
-                use_container_width=True,
+                width="stretch",
             )
 
         with table_col:
@@ -519,7 +819,7 @@ if file_key == "gerrit_expanded_final":
 
             st.dataframe(
                 api_statistics,
-                use_container_width=True,
+                width="stretch",
                 hide_index=True,
             )
 
@@ -548,11 +848,11 @@ search_text = st.text_input(
     placeholder="Enter a keyword to filter records...",
 )
 
-display_df = df
+filtered_df = display_df
 
 if search_text.strip():
 
-    matches = df.astype(str).apply(
+    matches = display_df.astype(str).apply(
         lambda column: column.str.contains(
             search_text.strip(),
             case=False,
@@ -561,7 +861,8 @@ if search_text.strip():
         )
     ).any(axis=1)
 
-    display_df = df[matches]
+    filtered_df = display_df[matches]
+
 
 preview_limit = st.select_slider(
     "Preview rows",
@@ -570,35 +871,44 @@ preview_limit = st.select_slider(
 )
 
 st.caption(
-    f"Showing {min(preview_limit, len(display_df)):,} "
-    f"of {len(display_df):,} matching records."
+    f"Showing {min(preview_limit, len(filtered_df)):,} "
+    f"of {len(filtered_df):,} matching records."
 )
 
 st.dataframe(
-    display_df.head(preview_limit),
-    use_container_width=True,
+    filtered_df.head(preview_limit),
+    width="stretch",
     height=430,
 )
 
 csv_bytes = (
-    display_df.head(5000)
+    filtered_df.head(5000)
     .to_csv(index=False)
     .encode("utf-8")
 )
 
+download_names = {
+    "github_final": "github_finalized_preview.csv",
+    "gerrit_expanded_final": "gerrit_finalized_preview.csv",
+    "gerrit_final": "gerrit_original_preview.csv",
+    "gerrit_features": "gerrit_structured_features_preview.csv",
+}
+
 st.download_button(
     "Download filtered preview (up to 5,000 rows)",
     data=csv_bytes,
-    file_name=f"{file_key}_preview.csv",
+    file_name=download_names.get(
+        file_key,
+        "dataset_preview.csv",
+    ),
     mime="text/csv",
 )
 
 st.write("")
 
-
 section_heading(
     "Column information",
-    "Data types, missing values, and unique values for each dataset field.",
+    "Data types, missing values and unique values for each dataset field.",
 )
 
 excluded_columns_present = [
@@ -620,13 +930,18 @@ for column in df.columns:
         missing_value_display = "Not reported"
 
     else:
-        missing_value_display = int(
-            missing_counts.get(column, 0)
+        missing_value_display = str(
+            int(missing_counts.get(column, 0))
         )
+
+    display_column_name = DISPLAY_COLUMN_NAMES.get(
+        column,
+        column,
+    )
 
     column_info_records.append(
         {
-            "Column": column,
+            "Column": display_column_name,
             "Data Type": str(df[column].dtype),
             "Missing Values": missing_value_display,
             "Unique Values": int(
@@ -641,7 +956,7 @@ column_info = pd.DataFrame(
 
 st.dataframe(
     column_info,
-    use_container_width=True,
+    width="stretch",
     hide_index=True,
 )
 
@@ -657,15 +972,20 @@ with st.expander("View full missing-value report"):
 
         st.dataframe(
             missing_data,
-            use_container_width=True,
+            width="stretch",
             hide_index=True,
         )
 
     if excluded_columns_present:
 
+        display_excluded_columns = [
+            DISPLAY_COLUMN_NAMES.get(column, column)
+            for column in excluded_columns_present
+        ]
+
         st.caption(
             "Excluded internal metadata columns: "
-            + ", ".join(excluded_columns_present)
+            + ", ".join(display_excluded_columns)
             + ". Their missing values are not included in this report."
         )
 
