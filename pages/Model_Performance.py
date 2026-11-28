@@ -1,4 +1,5 @@
 import pandas as pd
+from pathlib import Path
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
@@ -162,11 +163,179 @@ with st.expander("View GitHub evaluation table"):
     )
 
 
+
 st.success(
     f"Best GitHub model by F1 score: "
     f"{best_github['model']} "
     f"({best_github['f1_score'] * 100:.2f}%)."
 )
+
+
+st.divider()
+
+section_heading(
+    "GitHub confusion matrix",
+    "Predictions from the best-performing GitHub model.",
+)
+
+github_predictions_path = (
+    Path(__file__).resolve().parent.parent
+    / "data"
+    / "processed"
+    / "model_comparison"
+    / "model_predictions.csv"
+)
+
+if not github_predictions_path.exists():
+    st.error("GitHub prediction file could not be found.")
+else:
+    github_predictions_df = pd.read_csv(
+        github_predictions_path
+    )
+
+    github_prediction_columns = {
+        "Logistic Regression": "logistic_regression_prediction",
+        "Linear SVM": "linear_svm_prediction",
+        "Random Forest": "random_forest_prediction",
+    }
+
+    selected_github_model = str(best_github["model"])
+
+    prediction_column = github_prediction_columns.get(
+        selected_github_model
+    )
+
+    required_prediction_columns = [
+        "actual_label",
+        prediction_column,
+    ] if prediction_column else ["actual_label"]
+
+    missing_prediction_columns = [
+        column
+        for column in required_prediction_columns
+        if column not in github_predictions_df.columns
+    ]
+
+    if missing_prediction_columns:
+        st.error(
+            "GitHub prediction file is missing columns: "
+            + ", ".join(missing_prediction_columns)
+        )
+    else:
+        github_matrix = confusion_matrix(
+            github_predictions_df["actual_label"],
+            github_predictions_df[prediction_column],
+            labels=[0, 1],
+        )
+
+        github_tn, github_fp, github_fn, github_tp = (
+            github_matrix.ravel()
+        )
+
+        github_matrix_col, github_explanation_col = st.columns(
+            [1.35, 1]
+        )
+
+        with github_matrix_col:
+            fig = go.Figure(
+                data=go.Heatmap(
+                    z=github_matrix,
+                    x=[
+                        "Not security related",
+                        "Security related",
+                    ],
+                    y=[
+                        "Not security related",
+                        "Security related",
+                    ],
+                    colorscale=[
+                        [0.0, "#14243a"],
+                        [0.5, "#2563a6"],
+                        [1.0, "#22a6a1"],
+                    ],
+                    showscale=False,
+                    text=github_matrix,
+                    texttemplate="%{text}",
+                    textfont={
+                        "size": 22,
+                        "color": "white",
+                    },
+                    hovertemplate=(
+                        "Actual: %{y}<br>"
+                        "Predicted: %{x}<br>"
+                        "Count: %{z}"
+                        "<extra></extra>"
+                    ),
+                )
+            )
+
+            fig.update_layout(
+                title=(
+                    f"Actual vs. predicted classifications "
+                    f"({selected_github_model})"
+                ),
+                xaxis_title="Predicted label",
+                yaxis_title="Actual label",
+                template="plotly_dark",
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+                height=420,
+                margin={
+                    "l": 25,
+                    "r": 25,
+                    "t": 65,
+                    "b": 85,
+                },
+            )
+
+            fig.update_yaxes(
+                autorange="reversed"
+            )
+
+            st.plotly_chart(
+                fig,
+                use_container_width=True,
+            )
+
+        with github_explanation_col:
+            st.markdown("#### Prediction breakdown")
+
+            animated_metric_card(
+                "True negatives",
+                int(github_tn),
+                note="Correctly classified as not security related",
+            )
+
+            animated_metric_card(
+                "True positives",
+                int(github_tp),
+                note="Correctly classified as security related",
+            )
+
+            animated_metric_card(
+                "False positives",
+                int(github_fp),
+                note="Not security related, predicted as security related",
+            )
+
+            animated_metric_card(
+                "False negatives",
+                int(github_fn),
+                note="Security related, predicted as not security related",
+            )
+
+        st.caption(
+            f"Total GitHub predictions: "
+            f"{github_tn + github_fp + github_fn + github_tp:,}"
+        )
+
+        st.info(
+            "**How to read this matrix:** Rows represent the actual "
+            "dataset labels, while columns represent the model's predictions. "
+            "Label 0 represents not security related and label 1 represents "
+            "security related."
+        )
+
 
 st.divider()
 
@@ -273,7 +442,7 @@ fig = px.bar(
     color="Metric",
     barmode="group",
     text_auto=".1f",
-    title="Expanded Gerrit: mean cross validation metrics",
+    title="Gerrit: mean cross validation metrics",
     labels={
         "Model": "Model configuration",
         "Score": "Mean score (%)",
@@ -320,7 +489,7 @@ expanded_display = expanded_display.rename(
     }
 )
 
-with st.expander("View expanded Gerrit evaluation table"):
+with st.expander("View Gerrit evaluation table"):
     st.dataframe(
         expanded_display,
         use_container_width=True,
@@ -350,7 +519,7 @@ st.markdown(
     code level features could improve the classification of
     security related Gerrit code changes.
 
-    Four approaches were evaluated using the same expanded Gerrit
+    Four approaches were evaluated using the same Gerrit
     dataset and five-fold Stratified Group K-Fold cross-validation.
     """
 )
@@ -600,7 +769,7 @@ st.info(
 st.divider()
 
 section_heading(
-    "Expanded Gerrit confusion matrix",
+    "Gerrit confusion matrix",
     "Pooled out-of-fold predictions from the five-fold grouped "
     "cross-validation experiment.",
 )
@@ -759,7 +928,7 @@ with st.expander("View original Gerrit experiment (historical baseline)"):
 
     st.markdown(
         "The following results are retained for reference from the "
-        "original Gerrit experiment. The expanded Gerrit evaluation "
+        "original Gerrit experiment. The Gerrit evaluation "
         "above is the primary result used in this application."
     )
 
@@ -885,11 +1054,11 @@ with right:
     st.markdown(
         """
         <div class="cr-card">
-          <div class="cr-eyebrow">EXPANDED GERRIT</div>
+          <div class="cr-eyebrow">GERRIT</div>
           <h3>TF-IDF + Random Oversampling</h3>
           <p>
             This configuration achieved the highest mean PR-AUC
-            among the two expanded Gerrit configurations.
+            among the two Gerrit configurations.
           </p>
           <p style="color:#94a3b8;font-size:.85rem">
             Input: extracted code diffs.

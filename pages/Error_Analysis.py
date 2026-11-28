@@ -20,7 +20,7 @@ sidebar_brand()
 page_header(
     "MODEL DIAGNOSTICS",
     "Error Analysis",
-    "Inspect expanded Gerrit classification errors to understand "
+    "Inspect Gerrit classification errors to understand "
     "where the selected model struggles and identify opportunities "
     "for future improvement.",
 )
@@ -498,8 +498,8 @@ if expanded_fp is None or expanded_fn is None:
 
 
 section_heading(
-    "Expanded Gerrit error analysis",
-    "Out-of-fold classification errors from the expanded "
+    "Gerrit error analysis",
+    "Out-of-fold classification errors from the Gerrit "
     "TF-IDF + Random Oversampling + Logistic Regression model.",
 )
 
@@ -511,51 +511,19 @@ render_error_inspection(
 
 st.divider()
 
-with st.expander(
-    "View original Gerrit error analysis (historical baseline)"
-):
-    original_fp = load_csv(
-        "gerrit_false_positives"
-    )
-
-    original_fn = load_csv(
-        "gerrit_false_negatives"
-    )
-
-    if original_fp is None or original_fn is None:
-        st.warning(
-            "The original Gerrit error files could not be loaded."
-        )
-
-    else:
-        st.markdown(
-            "These are the recorded errors from the original Gerrit "
-            "experiment. The expanded Gerrit analysis above is the "
-            "primary result for this research."
-        )
-
-        render_error_inspection(
-            original_fp,
-            original_fn,
-            "original_gerrit",
-        )
-
-
-st.divider()
-
 section_heading(
     "Research observations",
-    "What the expanded Gerrit model's classification errors can tell us.",
+    "What the Gerrit model's classification errors can tell us.",
 )
 
 st.markdown(
     """
-    The expanded Gerrit dataset contains both security related and
-    non security related revisions. Although the expanded dataset
+    The Gerrit dataset contains both security related and
+    non security related revisions. Although the dataset
     provides more security related examples than the original
     experiment, the two classes are still imbalanced.
 
-    Text-based models can associate familiar words and programming
+    Text based models can associate familiar words and programming
     patterns with the positive class even when the full change context
     does not support that interpretation. Conversely, less familiar
     security related changes may be missed.
@@ -568,15 +536,14 @@ st.markdown(
 
 st.info(
     "Interpretation note: these errors represent disagreement with "
-    "the dataset's assigned labels. They do not independently establish "
-    "whether an exploitable vulnerability was present or absent."
+    "the dataset's assigned labels."
 )
 
 
 with st.expander("Evaluation methodology"):
     st.markdown(
         """
-        **Dataset:** Expanded Couchbase Java Client Gerrit dataset.
+        **Dataset:** Couchbase Java Client Gerrit dataset.
 
         **Model configuration:** TF-IDF + Random Oversampling +
         Logistic Regression.
