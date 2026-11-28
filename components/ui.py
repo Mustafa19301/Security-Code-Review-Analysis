@@ -284,15 +284,12 @@ def sidebar_brand():
                           color:#60a5fa;font-weight:1000">
                 SENTINEL
               </div>
-              <div style="font-size:.78rem;color:#94a3b8;margin-top:.5rem">
-                Security code review research
-              </div>
             </div>
             """,
             unsafe_allow_html=True,
         )
-        st.caption("University Research Prototype")
-        st.caption("GitHub + Gerrit")
+        st.caption("Developed by Mustafa Ahmed & Murtaza Ahmed")
+        st.caption("COMP4990 Project Mgmt: Techniques&Tools")
 
 
 def page_header(eyebrow, title, description):

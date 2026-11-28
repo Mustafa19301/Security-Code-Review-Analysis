@@ -20,8 +20,8 @@ sidebar_brand()
 page_header(
     "INTERACTIVE MODEL DEMO",
     "Code Review Analyzer",
-    "Explore how the expanded Gerrit classifier screens code changes "
-    "for patterns associated with Security wise modifications.",
+    "Explore how our integrated machine learning model from Gerrit classifier screens code changes "
+    "for patterns associated with Security wise modifications and verify if vulnerability exists.",
 )
 
 
@@ -656,11 +656,6 @@ def display_feature_explanations(contribution_df):
                     use_container_width=True,
                 )
 
-    st.caption(
-        f"Explanation display: {len(display_df)} meaningful "
-        f"terms retained; {hidden_count} generic terms hidden."
-    )
-
     st.info(
         "The charts hide generic programming and file path terms "
         "to make the explanation easier to read. These terms are "
@@ -731,7 +726,7 @@ def clear_analyzer():
     st.session_state.pop("last_analysis", None)
 
 
-with st.expander("View expanded Gerrit model evaluation"):
+with st.expander("View Gerrit model evaluation"):
     st.markdown(
         f"""
         **Selected model:** {model_name}
@@ -786,7 +781,7 @@ with st.expander("View expanded Gerrit model evaluation"):
 
 section_heading(
     "Try CodeReview Sentinel",
-    "You can explore the prepared examples without having Git installed "
+    "Explore prepared examples without having Git installed "
     "or knowing how to create a Git diff.",
 )
 
@@ -914,7 +909,7 @@ if analyze_button:
 
     else:
         with st.spinner(
-            "Analyzing the code change with the expanded Gerrit classifier..."
+            "Analyzing the code change with the Gerrit classifier..."
         ):
             try:
                 features = vectorizer.transform(
@@ -1018,7 +1013,7 @@ if result:
                 {class_value}
               </div>
               <div class="cr-card-note">
-                Expanded Gerrit model classification output
+                Gerrit model classification output
               </div>
             </div>
             """,
@@ -1062,7 +1057,7 @@ if result:
             - **Explanation filtering:** generic file path and programming
               terms may be hidden from the charts, but they remain part
               of the model's original prediction.
-            - **Important:** review the actual code and surrounding
+            - **NOTE:** review the actual code and surrounding
               context. The model can produce false positives and
               false negatives.
             """
@@ -1074,7 +1069,7 @@ st.divider()
 with st.expander("About this analyzer and its limitations"):
     st.markdown(
         f"""
-        **Training source:** Expanded Couchbase Java Client Gerrit dataset
+        **Training source:** Couchbase Java Client Gerrit dataset
 
         **Model configuration:** {model_name}
 
