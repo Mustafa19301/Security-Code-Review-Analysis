@@ -30,3 +30,16 @@ data/pr_review_traces/*.jsonl
 data/gerrit/repos/
 data/gerrit/couchbase_java_client/collected/pilot/
 data/gerrit/couchbase_java_client/collected_pilot_backup/
+
+# Local virtual environments
+.venv_backup/
+
+# IDE settings
+.idea/
+
+# Python environment files
+.env
+.env.*
+
+# Environment variables and local secrets
+.streamlit/secrets.toml
